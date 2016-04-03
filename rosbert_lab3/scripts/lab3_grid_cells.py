@@ -10,7 +10,7 @@ import tf
 import numpy
 import math 
 import rospy, tf, numpy, math
-import networkx
+import networkx as nx
 
 
 
@@ -33,25 +33,33 @@ def mapCallBack(data):
     offsetY = data.info.origin.position.y
     print data.info
 
+def readStart(_startPos):
+    global startPosX
+    global startPosY
+    global startPos
+    startPos = _startPos
+    startPosX = startPos.pose.pose.position.x
+    startPosY = startPos.pose.pose.position.y
+    print "Printing start pose"
+    print startPos.pose.pose
+
 def readGoal(goal):
     global goalX
     global goalY
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
+    print "Printing goal pose"
     print goal.pose
-    # Start Astar
+    aStar(startPos,goal)
 
-
-def readStart(startPos):
-
-    global startPosX
-    global startPosY
-    startPosX = startPos.pose.pose.position.x
-    startPosY = startPos.pose.pose.position.y
-    print startPos.pose.pose
 
 def aStar(start,goal):
-    pass
+    global G
+    G = nx.Graph()
+    for i in range(1,height*width):
+        if mapData[i] == 0: 
+            G.add_node(i,weight = mapData[i])
+            print G.number_of_nodes()
     # create a new instance of the map
 
     # generate a path to the start and end goals by searching through the neighbors, refer to aStar_explanied.py
@@ -94,8 +102,8 @@ def run():
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pubpath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
-    goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
-    goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
+    goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
+    start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
 
     # wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
