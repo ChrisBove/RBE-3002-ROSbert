@@ -50,6 +50,7 @@ def readGoal(goal):
     print goal.pose
     aStar(startPos,goal)
 
+
 def heuristic(current, goal): 
 	dx = abs(current.x - goal.x) 
 	dy = abs(current.y - goal.y) 
@@ -66,22 +67,6 @@ def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a n
 	#TODO
 	pass 
 
-def linkMap(G):	 
-	for i in range(1, G.size()):
-		print (test)
-		# add node -> (next) 
- 		# as long as node is not last in row and the one next to it
-		if ((i % width) > 0):  
-			G.add_edge(i+1)
-		
-		currentRow = height / i
-		# add node ^ (up) 
-		if (i < height): 
-			G.add_edge(i+width) 
-		# add node / (up to right) 		
-		if ((i<height) & ((i % width) > 0)):
-			G.add_edge(i+width + 1) 			 
-	return G
 
 def initMap(): 
 	G = nx.Graph()
@@ -92,9 +77,7 @@ def initMap():
 	G = linkMap(G)
 	
 	
-		
-
-
+	
 def gScore(path,current): 
 	#TODO
 	pass 
@@ -145,6 +128,33 @@ def aStar(start,goal):
 #        if mapData[i] == 0: 
 #           G.add_node(i,weight = mapData[i])
 #            print G.number_of_nodes()
+
+
+def linkMap():	 
+	for i in range(1, height*width):
+		# add node -> (next) 
+		if ((i % width) > 0):  
+			G.add_edge(i,(i+1))
+ 		# as long as node is not last in row and the one next to it
+		currentRow = height /i
+		if(i < height): 			
+			G.add_edge(i,(i+width)) 
+		# add node / (up to right) 		
+		if ((i<height) & ((i % width) > 0)):
+			G.add_edge(i,(i+width + 1)) 			 
+
+
+def aStar(start,goal):
+    global G
+    G = nx.Graph()
+    print (height * width)
+    for i in range(0,height*width):
+        G.add_node(i,weight = mapData[i])
+    
+    linkMap()
+    
+	
+
     # create a new instance of the map
 
     # generate a path to the start and end goals by searching through the neighbors, refer to aStar_explanied.py
@@ -202,7 +212,8 @@ def run():
     rospy.sleep(1)
 
 
-    initMap() 
+
+    aStar(0, 500)
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         rospy.sleep(2)  
