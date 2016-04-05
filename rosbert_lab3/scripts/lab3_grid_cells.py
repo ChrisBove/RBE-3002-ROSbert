@@ -67,16 +67,28 @@ def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a n
 	#TODO
 	pass 
 
+def linkMap():	 
+	for i in range(1, height*width):
+		# add node -> (next) 
+		if ((i % width) > 0):  
+			G.add_edge(i,(i+1))
+ 		# as long as node is not last in row and the one next to it
+		currentRow = height /i
+		if(i+width >= (height*width)): 			
+			G.add_edge(i,(i+width)) 
+		# add node / (up to right) 		
+		if ((i+width >= (height*width)) & ((i % width) > 0)):
+			G.add_edge(i,(i+width + 1)) 
+		if((currentRow > 0) & ((i & width ) > 0)): 
+			G.add_edge(i,(i-width+1)) 			 
+
 
 def initMap(): 
-	G = nx.Graph()
+	print (height * width)
 	for i in range(1, width*height): 
-		G.add_node(i,weight = mapData[i])
-		
-	print(G.size()) ## THIS SHOULD NOT BE 0
-	G = linkMap(G)
-	
-	
+		G.add_node(i,weight = mapData[i])	
+	linkMap()
+
 	
 def gScore(path,current): 
 	#TODO
@@ -97,17 +109,25 @@ def adjCellCheck(cellList):
 			## unfinished A* stuff... 
 
 def aStar(start,goal):
+	global G
+	G = nx.Graph()
+	initMap()  # add all nodes to grah, link all nodes
+	
+	for line in nx.generate_edgelist(G, data=['weight']): 
+		print(line)
+	print(nx.all_neighbors(G,1))
+
+
 	global path 
 	global openSet
 	global closedSet
-	path = list()          # the path
-	openSet = PriorityQueue()  #frontier - unexplored 
-	openSet.put(start,0)        
-	closedSet = set()		   #everything that has been examined
-	gScore = list() 
-	fScore = list()  
-	gScore[start] = 0								
-	fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
+	#openSet = PriorityQueue()  #frontier - unexplored 
+	#openSet.put(start,0)        
+	#closedSet = set()		   #everything that has been examined
+	#gScore = list() 
+	#fScore = list()  
+	#gScore[start] = 0								
+	#fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
 	
 #	while not openSet.empty():  
 #		current = openSet.get()
@@ -130,30 +150,6 @@ def aStar(start,goal):
 #            print G.number_of_nodes()
 
 
-def linkMap():	 
-	for i in range(1, height*width):
-		# add node -> (next) 
-		if ((i % width) > 0):  
-			G.add_edge(i,(i+1))
- 		# as long as node is not last in row and the one next to it
-		currentRow = height /i
-		if(i < height): 			
-			G.add_edge(i,(i+width)) 
-		# add node / (up to right) 		
-		if ((i<height) & ((i % width) > 0)):
-			G.add_edge(i,(i+width + 1)) 			 
-
-
-def aStar(start,goal):
-    global G
-    G = nx.Graph()
-    print (height * width)
-    for i in range(0,height*width):
-        G.add_node(i,weight = mapData[i])
-    
-    linkMap()
-    
-	
 
     # create a new instance of the map
 
