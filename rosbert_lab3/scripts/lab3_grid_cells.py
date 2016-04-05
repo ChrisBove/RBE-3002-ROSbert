@@ -12,6 +12,7 @@ import math
 import rospy, tf, numpy, math
 import networkx as nx
 
+nx
 # reads in global map
 def mapCallBack(data):
     global mapData
@@ -49,29 +50,73 @@ def readGoal(goal):
     print goal.pose
     aStar(startPos,goal)
 
-def heuristic(current, goal) 
+def heuristic(current, goal): 
 	dx = abs(current.x - goal.x) 
 	dy = abs(current.y - goal.y) 
 	h = (dx+dy)*.01             #tie breaker
-    return h
+   	return h
 
-def getAdj(current): 
-	allAdj = list()
-	x = current.x
-	y = current.y 
-	allAdj.add(x, y+1)
-	allAdj.add(x+1, y+1)
-	allAdj.add(x+1, y)
-	allAdj.add(x+1, x-1)
-	allAdj.add(x, y-1)
-	allAdj.add(x-1, y-1)
-	allAdj.add(x-1, y) 
-	allAdj.add(x-1, y+1) 
+def nodeToX(node): #not sure if this is needed - find x coordinate of a node
+	#TODO
+	pass 
+def nodeToY(node): # not sure if this is needed - find y coordinate of a node 
+	#TODO 
+	pass 
+def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a node that is in the map 
+	#TODO
+	pass 
+
+def linkMap(G):	 
+	for i in range(1, G.size()):
+		print (test)
+		# add node -> (next) 
+ 		# as long as node is not last in row and the one next to it
+		if ((i % width) > 0):  
+			G.add_edge(i+1)
+		
+		currentRow = height / i
+		# add node ^ (up) 
+		if (i < height): 
+			G.add_edge(i+width) 
+		# add node / (up to right) 		
+		if ((i<height) & ((i % width) > 0)):
+			G.add_edge(i+width + 1) 			 
+	return G
+
+def initMap(): 
+	G = nx.Graph()
+	for i in range(1, width*height): 
+		G.add_node(i,weight = mapData[i])
+		
+	print(G.size()) ## THIS SHOULD NOT BE 0
+	G = linkMap(G)
 	
 	
-	return allAdj
+		
+
+
+def gScore(path,current): 
+	#TODO
+	pass 
+
+	
+def checkIsShortestPath (something):
+	#TODO
+	pass 
+
+def adjCellCheck(cellList):
+	for i in range(1, len(cellList)):
+		currCell = cellList.index(i)
+		if(currCell != 100):  
+			if( currCell not in closeSet): 
+				if(currCell not in openSet): 
+					openSet.add(currCell) 
+			## unfinished A* stuff... 
 
 def aStar(start,goal):
+	global path 
+	global openSet
+	global closedSet
 	path = list()          # the path
 	openSet = PriorityQueue()  #frontier - unexplored 
 	openSet.put(start,0)        
@@ -81,16 +126,19 @@ def aStar(start,goal):
 	gScore[start] = 0								
 	fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
 	
-	while not openSet.empty():  
-		current = openSet.get()
-		closeSet.add(current)
-		if current == goal: 
-			return path
-
-		else: 
+#	while not openSet.empty():  
+#		current = openSet.get()
+#		closeSet.add(current)
+#		if current == goal: 
+#			return path
+#
+#		else:
+#			adjCellList = getAdj(current)
+# 			if not adjCellList.empty()
+#				
 			
 			
-
+############################################# 
 #            print G.number_of_nodes()
 
 #    for i in range(1,height*width):
@@ -104,6 +152,14 @@ def aStar(start,goal):
     # for each node in the path, process the nodes to generate GridCells and Path messages
 
     # Publish points
+
+def parsePath(path):  #takes A* path, output the nodes where the path changes directions  
+	#TODO
+	pass 
+def smoothPaht(path): #takes the parsed path & tries to remove unecessary zigzags 
+	#TODO
+	pass
+
 
 #publishes map to rviz using gridcells type
 
@@ -146,7 +202,7 @@ def run():
     rospy.sleep(1)
 
 
-
+    initMap() 
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         rospy.sleep(2)  
