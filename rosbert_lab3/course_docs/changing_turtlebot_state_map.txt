@@ -1,0 +1,7 @@
+Make sure to change you username. Not sure if ~/ works to get you home
+
+export TURTLEBOT_STAGE_WORLD_FILE=/home/christopher/catkin_ws/src/RBE-3002-ROSbert/rosbert_lab3/course_docs/stagemaps/simple_map.world
+
+export TURTLEBOT_STAGE_MAP_FILE=/home/christopher/catkin_ws/src/RBE-3002-ROSbert/rosbert_lab3/course_docs/stagemaps/simple_map.yaml
+
+
