@@ -12,9 +12,6 @@ import math
 import rospy, tf, numpy, math
 import networkx as nx
 
-
-
-
 # reads in global map
 def mapCallBack(data):
     global mapData
@@ -52,14 +49,54 @@ def readGoal(goal):
     print goal.pose
     aStar(startPos,goal)
 
+def heuristic(current, goal) 
+	dx = abs(current.x - goal.x) 
+	dy = abs(current.y - goal.y) 
+	h = (dx+dy)*.01             #tie breaker
+    return h
+
+def getAdj(current): 
+	allAdj = list()
+	x = current.x
+	y = current.y 
+	allAdj.add(x, y+1)
+	allAdj.add(x+1, y+1)
+	allAdj.add(x+1, y)
+	allAdj.add(x+1, x-1)
+	allAdj.add(x, y-1)
+	allAdj.add(x-1, y-1)
+	allAdj.add(x-1, y) 
+	allAdj.add(x-1, y+1) 
+	
+	
+	return allAdj
 
 def aStar(start,goal):
-    global G
-    G = nx.Graph()
-    for i in range(1,height*width):
-        if mapData[i] == 0: 
-            G.add_node(i,weight = mapData[i])
-            print G.number_of_nodes()
+	path = list()          # the path
+	openSet = PriorityQueue()  #frontier - unexplored 
+	openSet.put(start,0)        
+	closedSet = set()		   #everything that has been examined
+	gScore = list() 
+	fScore = list()  
+	gScore[start] = 0								
+	fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
+	
+	while not openSet.empty():  
+		current = openSet.get()
+		closeSet.add(current)
+		if current == goal: 
+			return path
+
+		else: 
+			
+			
+
+#            print G.number_of_nodes()
+
+#    for i in range(1,height*width):
+#        if mapData[i] == 0: 
+#           G.add_node(i,weight = mapData[i])
+#            print G.number_of_nodes()
     # create a new instance of the map
 
     # generate a path to the start and end goals by searching through the neighbors, refer to aStar_explanied.py
