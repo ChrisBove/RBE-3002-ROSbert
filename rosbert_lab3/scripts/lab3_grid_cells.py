@@ -10,11 +10,9 @@ import tf
 import numpy
 import math 
 import rospy, tf, numpy, math
+import networkx as nx
 
-
-
-
-
+nx
 # reads in global map
 def mapCallBack(data):
     global mapData
@@ -33,25 +31,126 @@ def mapCallBack(data):
     offsetY = data.info.origin.position.y
     print data.info
 
+def readStart(_startPos):
+    global startPosX
+    global startPosY
+    global startPos
+    startPos = _startPos
+    startPosX = startPos.pose.pose.position.x
+    startPosY = startPos.pose.pose.position.y
+    print "Printing start pose"
+    print startPos.pose.pose
+
 def readGoal(goal):
     global goalX
     global goalY
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
+    print "Printing goal pose"
     print goal.pose
-    # Start Astar
+    aStar(startPos,goal)
 
 
-def readStart(startPos):
+def heuristic(current, goal): 
+	dx = abs(current.x - goal.x) 
+	dy = abs(current.y - goal.y) 
+	h = (dx+dy)*.01             #tie breaker
+   	return h
 
-    global startPosX
-    global startPosY
-    startPosX = startPos.pose.pose.position.x
-    startPosY = startPos.pose.pose.position.y
-    print startPos.pose.pose
+def nodeToX(node): #not sure if this is needed - find x coordinate of a node
+	#TODO
+	pass 
+def nodeToY(node): # not sure if this is needed - find y coordinate of a node 
+	#TODO 
+	pass 
+def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a node that is in the map 
+	#TODO
+	pass 
+
+def linkMap():	 
+	for i in range(1, height*width):
+		# add node -> (next) 
+		if ((i % width) > 0):  
+			G.add_edge(i,(i+1))
+ 		# as long as node is not last in row and the one next to it
+		currentRow = height /i
+		if(i+width >= (height*width)): 			
+			G.add_edge(i,(i+width)) 
+		# add node / (up to right) 		
+		if ((i+width >= (height*width)) & ((i % width) > 0)):
+			G.add_edge(i,(i+width + 1)) 
+		if((currentRow > 0) & ((i & width ) > 0)): 
+			G.add_edge(i,(i-width+1)) 			 
+
+
+def initMap(): 
+	print (height * width)
+	for i in range(1, width*height): 
+		G.add_node(i,weight = mapData[i])	
+	linkMap()
+
+	
+def gScore(path,current): 
+	#TODO
+	pass 
+
+	
+def checkIsShortestPath (something):
+	#TODO
+	pass 
+
+def adjCellCheck(cellList):
+	for i in range(1, len(cellList)):
+		currCell = cellList.index(i)
+		if(currCell != 100):  
+			if( currCell not in closeSet): 
+				if(currCell not in openSet): 
+					openSet.add(currCell) 
+			## unfinished A* stuff... 
 
 def aStar(start,goal):
-    pass
+	global G
+	G = nx.Graph()
+	initMap()  # add all nodes to grah, link all nodes
+	
+	for line in nx.generate_edgelist(G, data=['weight']): 
+		print(line)
+	print(nx.all_neighbors(G,1))
+
+
+	global path 
+	global openSet
+	global closedSet
+	#openSet = PriorityQueue()  #frontier - unexplored 
+	#openSet.put(start,0)        
+	#closedSet = set()		   #everything that has been examined
+	#gScore = list() 
+	#fScore = list()  
+	#gScore[start] = 0								
+	#fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
+	
+#	while not openSet.empty():  
+#		current = openSet.get()
+#		closeSet.add(current)
+#		if current == goal: 
+#			return path
+#
+#		else:
+#			adjCellList = getAdj(current)
+# 			if not adjCellList.empty()
+#				
+			
+			
+############################################# 
+#            print G.number_of_nodes()
+
+#    for i in range(1,height*width):
+#        if mapData[i] == 0: 
+#           G.add_node(i,weight = mapData[i])
+#            print G.number_of_nodes()
+
+
+
     # create a new instance of the map
 
     # generate a path to the start and end goals by searching through the neighbors, refer to aStar_explanied.py
@@ -59,6 +158,14 @@ def aStar(start,goal):
     # for each node in the path, process the nodes to generate GridCells and Path messages
 
     # Publish points
+
+def parsePath(path):  #takes A* path, output the nodes where the path changes directions  
+	#TODO
+	pass 
+def smoothPaht(path): #takes the parsed path & tries to remove unecessary zigzags 
+	#TODO
+	pass
+
 
 #publishes map to rviz using gridcells type
 
@@ -94,14 +201,15 @@ def run():
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pubpath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
-    goal_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, readGoal, queue_size=1) #change topic for best results
-    goal_sub = rospy.Subscriber('initialpose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
+    goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
+    start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
 
     # wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
 
 
 
+    aStar(0, 500)
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         rospy.sleep(2)  
