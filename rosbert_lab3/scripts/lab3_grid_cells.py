@@ -52,14 +52,38 @@ def readGoal(goal):
     print goal.pose
     aStar(startPos,goal)
 
+def linkMap(G):	 
+	for i in range(1, height*width):
+		# add node -> (next) 
+ 		# as long as node is not last in row and the one next to it
+		if ((i % width) > 0):  
+			G.add_edge(i,(i+1))
+		
+		currentRow = height / i
+		# add node ^ (up) 
+		if (i < height): 
+			print "added up"
+			G.add_edge(i,(i+width)) 
+		# add node / (up to right) 		
+		if ((i<height) & ((i % width) > 0)):
+			print "added up right"
+			G.add_edge(i,(i+width + 1)) 			 
+	return G
+
 
 def aStar(start,goal):
     global G
     G = nx.Graph()
-    for i in range(1,height*width):
-        if mapData[i] == 0: 
-            G.add_node(i,weight = mapData[i])
-            print G.number_of_nodes()
+    print (height * width)
+    for i in range(0,height*width):
+        G.add_node(i,weight = mapData[i])
+       # print G.number_of_nodes()
+    print G.size()
+    G = linkMap(G)
+    print G.size()
+    for i in range(0,height*width):
+        print(nx.all_neighbors(G,i))
+	
     # create a new instance of the map
 
     # generate a path to the start and end goals by searching through the neighbors, refer to aStar_explanied.py
@@ -109,7 +133,7 @@ def run():
     rospy.sleep(1)
 
 
-
+    aStar(0, 500)
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         rospy.sleep(2)  
