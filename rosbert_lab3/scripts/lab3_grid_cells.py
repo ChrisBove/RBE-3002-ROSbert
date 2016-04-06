@@ -216,6 +216,7 @@ def aStar():
     # for each node in the path, process the nodes to generate GridCells and Path messages
 
     # Publish points
+	G.clear()
 
 def parsePath(path):  #takes A* path, output the nodes where the path changes directions  
 	#TODO
