@@ -301,7 +301,6 @@ def run():
     goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
     frontier_pub = rospy.Subscriber('map_cells/frontier', GridCells, queue_size=1)
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
-    pub_frontier = rospy.Publisher("/grid_cells/frontier",GridCells,queue_size=10)
     # wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
 
