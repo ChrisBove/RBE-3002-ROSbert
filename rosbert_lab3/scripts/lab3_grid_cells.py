@@ -57,15 +57,18 @@ def heuristic(current, goal):
 	h = (dx+dy)*.01             #tie breaker
    	return h
 
-def nodeToX(node): #not sure if this is needed - find x coordinate of a node
+def nodeToXY(node): #not sure if this is needed - find x and y coordinates of a node
 	#TODO
-	pass 
-def nodeToY(node): # not sure if this is needed - find y coordinate of a node 
-	#TODO 
-	pass 
+	pass  
 def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a node that is in the map 
 	#TODO
 	pass 
+def findConnected(node):
+    neighborhood = G.neighbors(node)
+    print "Printing neighborhood"
+    for node in neighborhood:
+        print node
+    pass
 
 def linkMap():	 
 	for i in range(1, height*width):
@@ -80,14 +83,18 @@ def linkMap():
 		if ((i+width >= (height*width)) & ((i % width) > 0)):
 			G.add_edge(i,(i+width + 1)) 
 		if((currentRow > 0) & ((i & width ) > 0)): 
-			G.add_edge(i,(i-width+1)) 			 
+			G.add_edge(i,(i-width+1))
+
 
 
 def initMap(): 
 	print (height * width)
-	for i in range(1, width*height): 
-		G.add_node(i,weight = mapData[i])	
+	for i in range(1, width*height):
+		G.add_node(i,weight = mapData[i])
 	linkMap()
+    
+	for node in G: 
+		findConnected(node)
 
 	
 def gScore(path,current): 
