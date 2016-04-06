@@ -72,13 +72,18 @@ def readGoal(goal):
 
 #returns in meters the point of the current index
 def getPointFromIndex(index):
-	i = getX(index)
-	j = getY(index)
 	point=Point()
-	point.x=(j*resolution)+offsetX + (1.5 * resolution)
-	point.y=(i*resolution)+offsetY - (.5 * resolution)
+	point.x=(getX(index)*resolution)+offsetX + (1.5 * resolution)
+	point.y=(getY(index)*resolution)+offsetY - (.5 * resolution)
 	point.z=0
 	return point
+
+# returns the index number given a point in the world
+def getIndexFromPoint(x,y):
+	#calculate the index coordinates
+	indexX = (x-offsetX - (1.5*resolution))/resolution
+	indexY = (y-offsetY + (.5*resolution))/resolution
+	return ((indexY-1)*width) + indexX
 
 def heuristic(index): 
 	current = getPointFromIndex(index)
@@ -87,16 +92,6 @@ def heuristic(index):
 	dy = abs(current.y - goalY) 
 	h = (dx+dy)
 	return h
-
-def setPriority(g, h): 
-	return g+h
-
-def nodeToXY(node): #not sure if this is needed - find x and y coordinates of a node
-	#TODO
-	pass  
-def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a node that is in the map 
-	#TODO
-	pass 
 
 
 def findConnected(node):
@@ -361,6 +356,7 @@ def run():
     pubpath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
+    frontier_pub = rospy.Subscriber('map_cells/frontier', GridCells, queue_size=1)
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
     pub_frontier = rospy.Publisher("/grid_cells/frontier",GridCells,queue_size=10)
     # wait a second for publisher, subscribers, and TF
