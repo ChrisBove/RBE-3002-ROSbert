@@ -139,6 +139,8 @@ def linkMap():
 		if(isInMap(i)):
 			G.add_edge(i, indexLeft(i))
 
+		print G.edges()
+
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
 	global frontier
@@ -286,6 +288,7 @@ def publishFrontier(grid):
 #Main handler of the project
 def run():
     global pub
+    global frontier
     frontier = list()
     global startRead
     global goalRead
