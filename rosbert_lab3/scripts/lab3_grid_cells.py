@@ -31,6 +31,8 @@ def mapCallBack(data):
     print data.info
 
 def readStart(_startPos):
+    global startRead
+    startRead = True
     global startPosX
     global startPosY
     global startPos
@@ -41,20 +43,32 @@ def readStart(_startPos):
     print startPos.pose.pose
 
 def readGoal(goal):
+    global goalRead
+    goalRead = True
     global goalX
     global goalY
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
     print "Printing goal pose"
     print goal.pose
-    aStar(startPos,goal)
 
+#returns in meters the point of the current index
+def getPointFromIndex(index):
+	i = getX(index)
+	j = getY(index)
+	point=Point()
+	point.x=(j*resolution)+offsetX + (1.5 * resolution)
+	point.y=(i*resolution)+offsetY - (.5 * resolution)
+	point.z=0
+	return point
 
-def heuristic(current, goal): 
-	dx = abs(current.x - goal.x) 
-	dy = abs(current.y - goal.y) 
-	h = (dx+dy)*.01             #tie breaker
-   	return h
+def heuristic(index): 
+	current = getPointFromIndex(index)
+	# calc manhattan distance
+	dx = abs(current.x - goalX) 
+	dy = abs(current.y - goalY) 
+	h = (dx+dy)
+	return h
 
 def nodeToXY(node): #not sure if this is needed - find x and y coordinates of a node
 	#TODO
@@ -66,34 +80,78 @@ def findConnected(node):
     neighborhood = G.neighbors(node)
     print "Printing neighborhood"
     for node in neighborhood:
+<<<<<<< HEAD
         frontier[node] = 100
     pass
     publishFrontier(frontier)
+=======
+        print node
+
+#returns the x value of the index
+def getX(index):
+	if (index % width) == 0:
+		return width
+	else:
+		return (index % width)
+
+#returns the y value of the index
+def getY(index):
+	return math.ceil(index/width)
+	
+#checks if the passed point is in the map
+def isInMap(point):
+	#catch if point is negative
+	if(point < 0):
+		return False
+	# is point within 1 and width and 1 and height?
+	if( ( 1 <= getX(point) and width >= getX(point)) and ( 1 <= getY(point) and height >= getY(point))):
+		return True
+	else:
+		return False
+
+#returns index of point above this one, only works for non-first row
+def indexAbove(index):
+	return index - width
+
+#returns index of point below this one, only works for non-last row
+def indexBelow(index):
+	return index + width
+
+#returns index of point right of this one, only works for non-last column
+def indexRight(index):
+	return index + 1
+
+#returns index of point right of this one, only works for non-first column
+def indexLeft(index):
+	return index - 1
+>>>>>>> origin/CB_Lab_3
 
 #this adds the edges to the graphs
-#todo make this actually work
 def linkMap():	 
 	for i in range(1, height*width):
-		# add node -> (next) 
-		if ((i % width) > 0):  
-			G.add_edge(i,(i+1))
- 		# as long as node is not last in row and the one next to it
-		currentRow = height /i
-		if(i+width >= (height*width)): 			
-			G.add_edge(i,(i+width)) 
-		# add node / (up to right) 		
-		if ((i+width >= (height*width)) & ((i % width) > 0)):
-			G.add_edge(i,(i+width + 1)) 
-		if((currentRow > 0) & ((i & width ) > 0)): 
-			G.add_edge(i,(i-width+1))
-
+		# try adding north
+		if(isInMap(i)):
+			G.add_edge(i, indexAbove(i))
+		# try adding east
+		if(isInMap(i)):
+			G.add_edge(i, indexRight(i))
+		# try adding south
+		if(isInMap(i)):
+			G.add_edge(i, indexBelow(i))
+		# try adding west
+		if(isInMap(i)):
+			G.add_edge(i, indexLeft(i))
 
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
 	global frontier
 	for i in range(1, width*height):
+<<<<<<< HEAD
 		G.add_node(i,weight = mapData[i])
 		frontier.append(0)
+=======
+		G.add_node(i,value = mapData[i],h=heuristic(i),g=0.0)
+>>>>>>> origin/CB_Lab_3
 	linkMap()
     
 
@@ -101,8 +159,8 @@ def initMap():
 	for node in G: 
 		findConnected(node)
 
-	
-def gScore(path,current): 
+#check's and/or compute's cell's g-score based on current g-score
+def gScore(cumulativeScore,index): 
 	#TODO
 	pass 
 
@@ -120,7 +178,7 @@ def adjCellCheck(cellList):
 					openSet.add(currCell) 
 			## unfinished A* stuff... 
 
-def aStar(start,goal):
+def aStar():
 	global G
 	G = nx.Graph()
 	initMap()  # add all nodes to grah, link all nodes
@@ -170,6 +228,7 @@ def aStar(start,goal):
     # for each node in the path, process the nodes to generate GridCells and Path messages
 
     # Publish points
+	G.clear()
 
 def parsePath(path):  #takes A* path, output the nodes where the path changes directions  
 	#TODO
@@ -234,11 +293,18 @@ def publishFrontier(grid):
 #Main handler of the project
 def run():
     global pub
+<<<<<<< HEAD
     global pub_frontier
     global frontier
     frontier = list()
 
 
+=======
+    global startRead
+    global goalRead
+    startRead = False
+    goalRead = False
+>>>>>>> origin/CB_Lab_3
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
@@ -251,10 +317,11 @@ def run():
     rospy.sleep(1)
 
 
-
-    aStar(0, 500)
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
+        if startRead and goalRead:
+            aStar()
+            goalRead = False
         rospy.sleep(2)  
         print("Complete")
     
