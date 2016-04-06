@@ -80,13 +80,10 @@ def findConnected(node):
     neighborhood = G.neighbors(node)
     print "Printing neighborhood"
     for node in neighborhood:
-<<<<<<< HEAD
         frontier[node] = 100
-    pass
     publishFrontier(frontier)
-=======
-        print node
 
+    
 #returns the x value of the index
 def getX(index):
 	if (index % width) == 0:
@@ -124,7 +121,6 @@ def indexRight(index):
 #returns index of point right of this one, only works for non-first column
 def indexLeft(index):
 	return index - 1
->>>>>>> origin/CB_Lab_3
 
 #this adds the edges to the graphs
 def linkMap():	 
@@ -146,12 +142,8 @@ def linkMap():
 def initMap(): 
 	global frontier
 	for i in range(1, width*height):
-<<<<<<< HEAD
-		G.add_node(i,weight = mapData[i])
+		G.add_node(i,value = mapData[i],h=heuristic(i),g=0.0
 		frontier.append(0)
-=======
-		G.add_node(i,value = mapData[i],h=heuristic(i),g=0.0)
->>>>>>> origin/CB_Lab_3
 	linkMap()
     
 
@@ -293,18 +285,11 @@ def publishFrontier(grid):
 #Main handler of the project
 def run():
     global pub
-<<<<<<< HEAD
-    global pub_frontier
-    global frontier
     frontier = list()
-
-
-=======
     global startRead
     global goalRead
     startRead = False
     goalRead = False
->>>>>>> origin/CB_Lab_3
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
