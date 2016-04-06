@@ -11,8 +11,24 @@ import numpy
 import math 
 import rospy, tf, numpy, math
 import networkx as nx
-
+import heapq
 nx
+
+## implementation from Python Cookbook
+class PriorityQueue:
+    def __init__(self):
+        self._queue = []
+        self._index = 0
+
+    def push(self, item, priority):
+        heapq.heappush(self._queue, (priority, self._index, item))
+        self._index += 1
+
+    def pop(self):
+        return heapq.heappop(self._queue)[-1]
+	
+
+
 # reads in global map
 def mapCallBack(data):
     global mapData
@@ -57,17 +73,22 @@ def heuristic(current, goal):
 	h = (dx+dy)*.01             #tie breaker
    	return h
 
+def setPriority(g, h): 
+	return g+h
+
 def nodeToXY(node): #not sure if this is needed - find x and y coordinates of a node
 	#TODO
 	pass  
 def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a node that is in the map 
 	#TODO
 	pass 
+
+
 def findConnected(node):
     neighborhood = G.neighbors(node)
-    print "Printing neighborhood"
-    for node in neighborhood:
-        print node
+    #print "Printing neighborhood"
+    #for node in neighborhood:
+    #    print node
     pass
 
 def linkMap():	 
@@ -85,32 +106,6 @@ def linkMap():
 		if((currentRow > 0) & ((i & width ) > 0)): 
 			G.add_edge(i,(i-width+1))
 
-
-def AJlinkMap():	 
-	for i in range(0, height*width):
-		currentAdj = list(maplist[i])
-		# add node -> (next) 
-		if ((i % width) > 0):  
-			currentAdj.append(i+1)
-		if((i % width) != 1):
-			currentAdj.append(i-1) 
- 		# as long as node is not last in row and the one next to it
-		if(i+width >= (height*width)): 			
-			currentAdj.append(i+width) 
-		if(i > width):
-			currentAdj.append(i-width)
-		maplist[i] = tuple(currentAdj)  
-
-
-def AJMap(): 
-	global maplist
-	maplist = list() 
-	for i in range(0, width*height): 
-		a = ()
-		maplist.append(a)
-	print(maplist)
-	AJlinkMap()
-	print(maplist)
 
 def initMap(): 
 	print (height * width)
@@ -131,46 +126,48 @@ def checkIsShortestPath (something):
 	#TODO
 	pass 
 
-def adjCellCheck(cellList):
-	for i in range(1, len(cellList)):
-		currCell = cellList.index(i)
+def adjCellCheck(current):
+	adjList = findConnected(current) 
+	for i in range(1, len(adjList)):
+		currCell = adjList.index(i)
 		if(currCell != 100):  
-			if( currCell not in closeSet): 
+			if(currCell not in closeSet): 
 				if(currCell not in openSet): 
-					openSet.add(currCell) 
+					openSet.put(currCell) 
+				#else if( check shortest path) 
+					#calc G + h
+		else:
+			 break
 			## unfinished A* stuff... 
+			## findConnected(node)
 
 def aStar(start,goal):
 	global G
 	G = nx.Graph()
 	initMap()  # add all nodes to grah, link all nodes
-	
-	for line in nx.generate_edgelist(G, data=['weight']): 
-		print(line)
-	print(nx.all_neighbors(G,1))
-
 
 	global path 
 	global openSet
 	global closedSet
-	#openSet = PriorityQueue()  #frontier - unexplored 
-	#openSet.put(start,0)        
-	#closedSet = set()		   #everything that has been examined
-	#gScore = list() 
-	#fScore = list()  
-	#gScore[start] = 0								
-	#fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
+	path = list() 
+	path.append(start)
+	openSet = PriorityQueue()  #frontier - unexplored 
+	openSet.push(start,0)        # set priority to distance
+	closedSet = set()		   #everything that has been examined
+	gScore = list() 
+	fScore = list()  
+#	gScore[start] = 0								
+#	fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
 	
-#	while not openSet.empty():  
-#		current = openSet.get()
-#		closeSet.add(current)
-#		if current == goal: 
-#			return path
-#
-#		else:
-#			adjCellList = getAdj(current)
-# 			if not adjCellList.empty()
-#				
+	while not openSet:  
+		current = openSet.get()
+		closeSet.add(current)
+		if current == goal: 
+			return path
+		else:
+			adjCellList = getAdj(current)
+ 		#	if not adjCellList.empty()
+	pass		
 			
 			
 ############################################# 
@@ -240,8 +237,8 @@ def run():
     rospy.sleep(1)
 
 
-
-    AJMap()
+    aStar(0, 100)
+    
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         rospy.sleep(2)  
