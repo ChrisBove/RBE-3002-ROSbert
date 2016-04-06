@@ -66,7 +66,7 @@ def getIndexFromPoint(x,y):
 	#calculate the index coordinates
 	indexX = (x-offsetX - (1.5*resolution))/resolution
 	indexY = (y-offsetY + (.5*resolution))/resolution
-	return ((indexY-1)*width)) + indexX
+	return ((indexY-1)*width) + indexX
 
 def heuristic(index): 
 	current = getPointFromIndex(index)
