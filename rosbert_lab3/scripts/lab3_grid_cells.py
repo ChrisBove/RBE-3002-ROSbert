@@ -77,11 +77,36 @@ def linkMap():
 		if(i+width >= (height*width)): 			
 			G.add_edge(i,(i+width)) 
 		# add node / (up to right) 		
-		if ((i+width >= (height*width)) & ((i % width) > 0)):
+		if ((i+width <= (height*width)) & ((i % width) > 0)):
 			G.add_edge(i,(i+width + 1)) 
 		if((currentRow > 0) & ((i & width ) > 0)): 
 			G.add_edge(i,(i-width+1)) 			 
 
+def AJlinkMap():	 
+	for i in range(0, height*width):
+		currentAdj = list(maplist[i])
+		# add node -> (next) 
+		if ((i % width) > 0):  
+			currentAdj.append(i+1)
+		if((i % width) != 1):
+			currentAdj.append(i-1) 
+ 		# as long as node is not last in row and the one next to it
+		if(i+width >= (height*width)): 			
+			currentAdj.append(i+width) 
+		if(i > width):
+			currentAdj.append(i-width)
+		maplist[i] = tuple(currentAdj)  
+
+
+def AJMap(): 
+	global maplist
+	maplist = list() 
+	for i in range(0, width*height): 
+		a = ()
+		maplist.append(a)
+	print(maplist)
+	AJlinkMap()
+	print(maplist)
 
 def initMap(): 
 	print (height * width)
@@ -209,7 +234,7 @@ def run():
 
 
 
-    aStar(0, 500)
+    AJMap()
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         rospy.sleep(2)  
