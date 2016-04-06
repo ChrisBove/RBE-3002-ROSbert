@@ -30,7 +30,6 @@ class PriorityQueue:
 	
 
 
-
 # reads in global map
 def mapCallBack(data):
     global mapData
@@ -102,12 +101,14 @@ def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a n
 
 def findConnected(node):
     neighborhood = G.neighbors(node)
-    return neighborhood
+    print (len(neighborhood))
     #print "Printing neighborhood"
-    #for node in neighborhood:
-    #    frontier[node] = 100
-    #pass
-    #publishFrontier(frontier)
+    for node in neighborhood:
+        frontier[node] = 100
+        print node 
+    publishFrontier(frontier)
+    return neighborhood
+
 
 #returns the x value of the index
 def getX(index):
@@ -186,6 +187,7 @@ def checkIsShortestPath (something):
 	pass 
 
 def adjCellCheck(current):
+	global adjList
 	adjList = list()
 	adjList = findConnected(current) 
 	print(adjList)
@@ -319,9 +321,29 @@ def publishFrontier(grid):
     pub_frontier.publish(cells)  
 
 
+class amjNode: 
+	def __init(self, index, val, huer, g): 
+		self.index = index
+		self.val = val 
+		self.huer = huer 
+		self.g = g 
+		self.adj = list()
+	def addAdj(index):
+		self.adj.append(index)
+
+
+
 #Main handler of the project
 def run():
+
+#    new = amjNode(1, 100, 5, 0)
+#    new.addAdj(5)
+	
+#    print (new.adj)
+
+
     global pub
+
     global startRead
     global goalRead
     startRead = False
@@ -329,6 +351,8 @@ def run():
     global pub_frontier
     global frontier
     frontier = list()
+
+
 
 
     rospy.init_node('lab3')
