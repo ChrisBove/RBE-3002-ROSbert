@@ -95,14 +95,14 @@ def heuristic(index):
 
 
 def findConnected(node):
-    neighborhood = G.neighbors(node)
-    print (len(neighborhood))
-    #print "Printing neighborhood"
-    for node in neighborhood:
-        frontier[node] = 100
-        print node 
-    publishFrontier(frontier)
-    return neighborhood
+
+	neighborhood = G.neighbors(node)
+	print "Printing neighborhood"
+	for node in neighborhood:
+		frontier[node] = 100
+	publishFrontier(frontier)
+	return neighborhood
+
 
 
 #returns the x value of the index
@@ -159,6 +159,8 @@ def linkMap():
 		# try adding west
 		if(isInMap(i)):
 			G.add_edge(i, indexLeft(i))
+
+		print G.edges()
 
 #takes map data and converts it into nodes, calls linkMap function
 
@@ -338,6 +340,9 @@ def run():
 
 
     global pub
+
+    global frontier
+    frontier = list()
 
     global startRead
     global goalRead
