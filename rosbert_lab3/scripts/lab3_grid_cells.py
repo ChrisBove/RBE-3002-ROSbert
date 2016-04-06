@@ -171,8 +171,8 @@ def initMap():
 	for node in G: 
 		findConnected(node)
 
-	
-def gScore(path,current): 
+#check's and/or compute's cell's g-score based on current g-score
+def gScore(cumulativeScore,index): 
 	#TODO
 	pass 
 
@@ -242,6 +242,7 @@ def aStar():
     # for each node in the path, process the nodes to generate GridCells and Path messages
 
     # Publish points
+	G.clear()
 
 def parsePath(path):  #takes A* path, output the nodes where the path changes directions  
 	#TODO
