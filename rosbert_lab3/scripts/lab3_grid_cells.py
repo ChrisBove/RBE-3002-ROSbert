@@ -64,11 +64,15 @@ def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a n
 	#TODO
 	pass 
 def findConnected(node):
+    frontier = list()
+    for i in range(0, height*width):
+        frontier.append(0)
     neighborhood = G.neighbors(node)
     print "Printing neighborhood"
     for node in neighborhood:
-        print node
+        frontier[node] = 100
     pass
+    publishFrontier(frontier)
 
 #this adds the edges to the graphs
 #todo make this actually work
@@ -203,11 +207,11 @@ def publishCells(grid):
     pub.publish(cells)           
 
 
-def publishFrontier(grid)
-        global pub
-    print "publishing"
+def publishFrontier(grid):
+    global pub_frontier
+    print "publishing frontier"
 
-    # resolution and offset of the map
+        # resolution and offset of the map
     k=0
     cells = GridCells()
     cells.header.frame_id = 'map'
@@ -225,12 +229,13 @@ def publishFrontier(grid)
                 point.y=(i*resolution)+offsetY - (.5 * resolution) # added secondary offset ... Magic ?
                 point.z=0
                 cells.cells.append(point)
-    pub_frontier.publish(cells)  
+    pub_frontier.publish(grid)  
 
 
 #Main handler of the project
 def run():
     global pub
+    global pub_frontier
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
