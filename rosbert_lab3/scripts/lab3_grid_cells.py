@@ -12,7 +12,6 @@ import math
 import rospy, tf, numpy, math
 import networkx as nx
 
-nx
 # reads in global map
 def mapCallBack(data):
     global mapData
@@ -77,10 +76,13 @@ def heuristic(index):
 	return h
 
 def findConnected(node):
-    neighborhood = G.neighbors(node)
-    print "Printing neighborhood"
-    for node in neighborhood:
-        print node
+	neighborhood = G.neighbors(node)
+	print "Printing neighborhood"
+	for node in neighborhood:
+		frontier[node] = 100
+	publishFrontier(frontier)
+	return neighborhood
+
 
 #returns the x value of the index
 def getX(index):
@@ -136,13 +138,18 @@ def linkMap():
 		if(isInMap(i)):
 			G.add_edge(i, indexLeft(i))
 
+		print G.edges()
+
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
-	print (height * width)
+	global frontier
 	for i in range(1, width*height):
 		G.add_node(i,value = mapData[i],h=heuristic(i),g=0.0)
+		frontier.append(0)
 	linkMap()
     
+
+
 	for node in G: 
 		findConnected(node)
 
@@ -228,10 +235,35 @@ def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzag
 #publishes map to rviz using gridcells type
 
 def publishCells(grid):
-    global pub
-    print "publishing"
+	global pub
+	print "publishing"
 
     # resolution and offset of the map
+	k=0
+	cells = GridCells()
+	cells.header.frame_id = 'map'
+	cells.cell_width = resolution 
+	cells.cell_height = resolution
+
+	for i in range(1,height): #height should be set to hieght of grid
+		k=k+1
+		for j in range(1,width): #width should be set to width of grid
+			k=k+1
+            #print k # used for debugging
+			if (grid[k] == 100):
+				point=Point()
+				point.x=(j*resolution)+offsetX + (1.5 * resolution) # added secondary offset 
+				point.y=(i*resolution)+offsetY - (.5 * resolution) # added secondary offset ... Magic ?
+				point.z=0
+				cells.cells.append(point)
+	pub.publish(cells)           
+
+
+def publishFrontier(grid):
+    global pub_frontier
+    print "publishing frontier"
+
+        # resolution and offset of the map
     k=0
     cells = GridCells()
     cells.header.frame_id = 'map'
@@ -249,11 +281,14 @@ def publishCells(grid):
                 point.y=(i*resolution)+offsetY - (.5 * resolution) # added secondary offset ... Magic ?
                 point.z=0
                 cells.cells.append(point)
-    pub.publish(cells)           
+    pub_frontier.publish(cells)  
+
 
 #Main handler of the project
 def run():
     global pub
+    global frontier
+    frontier = list()
     global startRead
     global goalRead
     startRead = False
@@ -266,7 +301,7 @@ def run():
     goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
     frontier_pub = rospy.Subscriber('map_cells/frontier', GridCells, queue_size=1)
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
-
+    pub_frontier = rospy.Publisher("/grid_cells/frontier",GridCells,queue_size=10)
     # wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
 
