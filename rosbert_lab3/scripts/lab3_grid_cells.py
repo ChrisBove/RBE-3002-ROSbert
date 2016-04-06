@@ -77,12 +77,12 @@ def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a n
 	#TODO
 	pass 
 def findConnected(node):
-    neighborhood = G.neighbors(node)
-    print "Printing neighborhood"
-    for node in neighborhood:
-        frontier[node] = 100
-    publishFrontier(frontier)
-    return neighborhood
+	neighborhood = G.neighbors(node)
+	print "Printing neighborhood"
+	for node in neighborhood:
+		frontier[node] = 100
+	publishFrontier(frontier)
+	return neighborhood
 
 
 #returns the x value of the index
