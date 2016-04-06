@@ -63,6 +63,13 @@ def getPointFromIndex(index):
 	point.z=0
 	return point
 
+# returns the index number given a point in the world
+def getIndexFromPoint(x,y):
+	#calculate the index coordinates
+	indexX = (x-offsetX - (1.5*resolution))/resolution
+	indexY = (y-offsetY + (.5*resolution))/resolution
+	return ((indexY-1)*width)) + indexX
+
 def heuristic(index): 
 	current = getPointFromIndex(index)
 	# calc manhattan distance
@@ -71,12 +78,6 @@ def heuristic(index):
 	h = (dx+dy)
 	return h
 
-def nodeToXY(node): #not sure if this is needed - find x and y coordinates of a node
-	#TODO
-	pass  
-def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a node that is in the map 
-	#TODO
-	pass 
 def findConnected(node):
     neighborhood = G.neighbors(node)
     print "Printing neighborhood"
