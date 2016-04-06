@@ -32,6 +32,8 @@ def mapCallBack(data):
     print data.info
 
 def readStart(_startPos):
+    global startRead
+    startRead = True
     global startPosX
     global startPosY
     global startPos
@@ -42,20 +44,32 @@ def readStart(_startPos):
     print startPos.pose.pose
 
 def readGoal(goal):
+    global goalRead
+    goalRead = True
     global goalX
     global goalY
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
     print "Printing goal pose"
     print goal.pose
-    aStar(startPos,goal)
 
+#returns in meters the point of the current index
+def getPointFromIndex(index):
+	i = getX(index)
+	j = getY(index)
+	point=Point()
+	point.x=(j*resolution)+offsetX + (1.5 * resolution)
+	point.y=(i*resolution)+offsetY - (.5 * resolution)
+	point.z=0
+	return point
 
-def heuristic(current, goal): 
-	dx = abs(current.x - goal.x) 
-	dy = abs(current.y - goal.y) 
-	h = (dx+dy)*.01             #tie breaker
-   	return h
+def heuristic(index): 
+	current = getPointFromIndex(index)
+	# calc manhattan distance
+	dx = abs(current.x - goalX) 
+	dy = abs(current.y - goalY) 
+	h = (dx+dy)
+	return h
 
 def nodeToXY(node): #not sure if this is needed - find x and y coordinates of a node
 	#TODO
@@ -68,7 +82,6 @@ def findConnected(node):
     print "Printing neighborhood"
     for node in neighborhood:
         print node
-    pass
 
 #returns the x value of the index
 def getX(index):
@@ -128,7 +141,7 @@ def linkMap():
 def initMap(): 
 	print (height * width)
 	for i in range(1, width*height):
-		G.add_node(i,weight = mapData[i])
+		G.add_node(i,value = mapData[i],h=heuristic(i),g=0.0)
 	linkMap()
     
 	for node in G: 
@@ -153,7 +166,7 @@ def adjCellCheck(cellList):
 					openSet.add(currCell) 
 			## unfinished A* stuff... 
 
-def aStar(start,goal):
+def aStar():
 	global G
 	G = nx.Graph()
 	initMap()  # add all nodes to grah, link all nodes
@@ -241,6 +254,10 @@ def publishCells(grid):
 #Main handler of the project
 def run():
     global pub
+    global startRead
+    global goalRead
+    startRead = False
+    goalRead = False
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
@@ -253,10 +270,11 @@ def run():
     rospy.sleep(1)
 
 
-
-    aStar(0, 500)
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
+        if startRead and goalRead:
+            aStar()
+            goalRead = False
         rospy.sleep(2)  
         print("Complete")
     
