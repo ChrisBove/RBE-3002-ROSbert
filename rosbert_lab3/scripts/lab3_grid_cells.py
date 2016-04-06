@@ -11,7 +11,7 @@ import numpy
 import math 
 import rospy, tf, numpy, math
 import networkx as nx
-<<<<<<< HEAD
+
 import heapq
 nx
 
@@ -29,8 +29,7 @@ class PriorityQueue:
         return heapq.heappop(self._queue)[-1]
 	
 
-=======
->>>>>>> JPG_A
+
 
 # reads in global map
 def mapCallBack(data):
@@ -103,12 +102,12 @@ def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a n
 
 def findConnected(node):
     neighborhood = G.neighbors(node)
-
-    print "Printing neighborhood"
-    for node in neighborhood:
-        frontier[node] = 100
-    pass
-    publishFrontier(frontier)
+    return neighborhood
+    #print "Printing neighborhood"
+    #for node in neighborhood:
+    #    frontier[node] = 100
+    #pass
+    #publishFrontier(frontier)
 
 #returns the x value of the index
 def getX(index):
@@ -173,11 +172,8 @@ def initMap():
 		G.add_node(i,value = mapData[i],h=heuristic(i),g=0.0)
 		frontier.append(0)
 	linkMap()
-    
-
-
-	for node in G: 
-		findConnected(node)
+	#for node in G: 
+	#	findConnected(node)
 
 #check's and/or compute's cell's g-score based on current g-score
 def gScore(cumulativeScore,index): 
@@ -190,14 +186,17 @@ def checkIsShortestPath (something):
 	pass 
 
 def adjCellCheck(current):
+	adjList = list()
 	adjList = findConnected(current) 
+	print(adjList)
 	for i in range(1, len(adjList)):
 		currCell = adjList.index(i)
-		if(currCell != 100):  
-			if(currCell not in closeSet): 
-				if(currCell not in openSet): 
-					openSet.put(currCell) 
-				#else if( check shortest path) 
+		if(currCell != 100): 
+			print (currCell) 
+			##if(currCell not in closeSet): 
+			#	if(currCell not in openSet): 
+			#		openSet.put(currCell) 
+			#	#else if( check shortest path) 
 					#calc G + h
 		else:
 			 break
@@ -213,25 +212,33 @@ def aStar():
 	global openSet
 	global closedSet
 	path = nx.Graph()
-	path.append(start)
+	start = 0
+	path.add_node(start)
 	openSet = PriorityQueue()  #frontier - unexplored 
 	openSet.push(start,0)        # set priority to distance
+	openSet.push(5,1)
 	closedSet = set()		   #everything that has been examined
 	gScore = list() 
 	fScore = list()  
 #	gScore[start] = 0								
 #	fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
+	goal = 500
 	
-	while not openSet:  
-		current = openSet.get()
-		closeSet.add(current)
+	print "start a*"
+	
+	while openSet:  
+		current = openSet.pop()
+		closedSet.add(current)
 		if current == goal: 
 			return path
 		else:
-			adjCellList = getAdj(current)
+			print "looking at adj" 
+			adjCellList = adjCellCheck(current)
+			print "done looking at adj"
  		#	if not adjCellList.empty()
 	pass		
 			
+	print "end a*"
 			
 ############################################# 
 #            print G.number_of_nodes()
