@@ -169,7 +169,7 @@ def aStar(start,goal):
 def parsePath(path):  #takes A* path, output the nodes where the path changes directions  
 	#TODO
 	pass 
-def smoothPaht(path): #takes the parsed path & tries to remove unecessary zigzags 
+def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzags 
 	#TODO
 	pass
 
