@@ -82,8 +82,9 @@ def findConnected(node):
     for node in neighborhood:
         frontier[node] = 100
     publishFrontier(frontier)
+    return neighborhood
 
-    
+
 #returns the x value of the index
 def getX(index):
 	if (index % width) == 0:
@@ -142,7 +143,7 @@ def linkMap():
 def initMap(): 
 	global frontier
 	for i in range(1, width*height):
-		G.add_node(i,value = mapData[i],h=heuristic(i),g=0.0
+		G.add_node(i,value = mapData[i],h=heuristic(i),g=0.0)
 		frontier.append(0)
 	linkMap()
     
