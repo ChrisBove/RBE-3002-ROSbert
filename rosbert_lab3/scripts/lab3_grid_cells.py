@@ -204,7 +204,7 @@ def aStar():
 	global path 
 	global openSet
 	global closedSet
-	path = list() 
+	path = nx.Graph()
 	path.append(start)
 	openSet = PriorityQueue()  #frontier - unexplored 
 	openSet.push(start,0)        # set priority to distance
