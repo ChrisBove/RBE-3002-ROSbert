@@ -200,6 +200,32 @@ def publishCells(grid):
                 cells.cells.append(point)
     pub.publish(cells)           
 
+
+def publishFrontier(grid)
+        global pub
+    print "publishing"
+
+    # resolution and offset of the map
+    k=0
+    cells = GridCells()
+    cells.header.frame_id = 'map'
+    cells.cell_width = resolution 
+    cells.cell_height = resolution
+
+    for i in range(1,height): #height should be set to hieght of grid
+        k=k+1
+        for j in range(1,width): #width should be set to width of grid
+            k=k+1
+            #print k # used for debugging
+            if (grid[k] == 100):
+                point=Point()
+                point.x=(j*resolution)+offsetX + (1.5 * resolution) # added secondary offset 
+                point.y=(i*resolution)+offsetY - (.5 * resolution) # added secondary offset ... Magic ?
+                point.z=0
+                cells.cells.append(point)
+    pub_frontier.publish(cells)  
+
+
 #Main handler of the project
 def run():
     global pub
@@ -210,7 +236,7 @@ def run():
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
-
+    pub_frontier = rospy.Publisher("/grid_cells/frontier",GridCells,queue_size=10)
     # wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
 
