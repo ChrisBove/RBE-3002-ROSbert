@@ -55,11 +55,9 @@ def readGoal(goal):
 
 #returns in meters the point of the current index
 def getPointFromIndex(index):
-	i = getX(index)
-	j = getY(index)
 	point=Point()
-	point.x=(j*resolution)+offsetX + (1.5 * resolution)
-	point.y=(i*resolution)+offsetY - (.5 * resolution)
+	point.x=(getX(index)*resolution)+offsetX + (1.5 * resolution)
+	point.y=(getY(index)*resolution)+offsetY - (.5 * resolution)
 	point.z=0
 	return point
 
