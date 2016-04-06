@@ -70,23 +70,59 @@ def findConnected(node):
         print node
     pass
 
+#returns the x value of the index
+def getX(index):
+	if (index % width) == 0:
+		return width
+	else:
+		return (index % width)
+
+#returns the y value of the index
+def getY(index):
+	return math.ceil(index/width)
+	
+#checks if the passed point is in the map
+def isInMap(point):
+	#catch if point is negative
+	if(point < 0):
+		return False
+	# is point within 1 and width and 1 and height?
+	if( ( 1 <= getX(point) and width >= getX(point)) and ( 1 <= getY(point) and height >= getY(point))):
+		return True
+	else:
+		return False
+
+#returns index of point above this one, only works for non-first row
+def indexAbove(index):
+	return index - width
+
+#returns index of point below this one, only works for non-last row
+def indexBelow(index):
+	return index + width
+
+#returns index of point right of this one, only works for non-last column
+def indexRight(index):
+	return index + 1
+
+#returns index of point right of this one, only works for non-first column
+def indexLeft(index):
+	return index - 1
+
 #this adds the edges to the graphs
-#todo make this actually work
 def linkMap():	 
 	for i in range(1, height*width):
-		# add node -> (next) 
-		if ((i % width) > 0):  
-			G.add_edge(i,(i+1))
- 		# as long as node is not last in row and the one next to it
-		currentRow = height /i
-		if(i+width >= (height*width)): 			
-			G.add_edge(i,(i+width)) 
-		# add node / (up to right) 		
-		if ((i+width >= (height*width)) & ((i % width) > 0)):
-			G.add_edge(i,(i+width + 1)) 
-		if((currentRow > 0) & ((i & width ) > 0)): 
-			G.add_edge(i,(i-width+1))
-
+		# try adding north
+		if(isInMap(i)):
+			G.add_edge(i, indexAbove(i))
+		# try adding east
+		if(isInMap(i)):
+			G.add_edge(i, indexRight(i))
+		# try adding south
+		if(isInMap(i)):
+			G.add_edge(i, indexBelow(i))
+		# try adding west
+		if(isInMap(i)):
+			G.add_edge(i, indexLeft(i))
 
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
