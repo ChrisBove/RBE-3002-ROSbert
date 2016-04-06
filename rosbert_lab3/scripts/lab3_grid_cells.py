@@ -70,6 +70,8 @@ def findConnected(node):
         print node
     pass
 
+#this adds the edges to the graphs
+#todo make this actually work
 def linkMap():	 
 	for i in range(1, height*width):
 		# add node -> (next) 
@@ -86,7 +88,7 @@ def linkMap():
 			G.add_edge(i,(i-width+1))
 
 
-
+#takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
 	print (height * width)
 	for i in range(1, width*height):
@@ -169,7 +171,7 @@ def aStar(start,goal):
 def parsePath(path):  #takes A* path, output the nodes where the path changes directions  
 	#TODO
 	pass 
-def smoothPaht(path): #takes the parsed path & tries to remove unecessary zigzags 
+def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzags 
 	#TODO
 	pass
 
