@@ -11,6 +11,7 @@ Panels:
         - /goal_pose1
         - /Path1
         - /Way Points1
+        - /Map Check1
       Splitter Ratio: 0.5
     Tree Height: 843
   - Class: rviz/Selection
@@ -286,6 +287,13 @@ Visualization Manager:
       Name: Way Points
       Topic: /waypoints
       Value: true
+    - Alpha: 1
+      Class: rviz/GridCells
+      Color: 25; 255; 0
+      Enabled: true
+      Name: Map Check
+      Topic: /map_check
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -343,5 +351,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1855
-  X: 55
-  Y: -14
+  X: 65
+  Y: 24
