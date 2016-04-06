@@ -28,7 +28,15 @@ class PriorityQueue:
     def pop(self):
         return heapq.heappop(self._queue)[-1]
 	
-
+class aNode: 
+	def __init__(self, index, val, huer, g): 
+		self.index = index
+		self.val = val 
+		self.huer = huer 
+		self.g = g 
+		self.adjacent = list()
+	def addAdjacent(self, index):
+		self.adjacent.append(index)
 
 # reads in global map
 def mapCallBack(data):
@@ -204,7 +212,7 @@ def adjCellCheck(current):
 
 def aStar():
 	global G
-	G = nx.Graph()
+	G = list()
 	initMap()  # add all nodes to grah, link all nodes
 
 	global path 
@@ -318,25 +326,17 @@ def publishFrontier(grid):
     pub_frontier.publish(cells)  
 
 
-class amjNode: 
-	def __init(self, index, val, huer, g): 
-		self.index = index
-		self.val = val 
-		self.huer = huer 
-		self.g = g 
-		self.adj = list()
-	def addAdj(index):
-		self.adj.append(index)
+
 
 
 
 #Main handler of the project
 def run():
 
-#    new = amjNode(1, 100, 5, 0)
-#    new.addAdj(5)
+    new = aNode(1, 100, 5, 0)
+    new.addAdjacent(5)
 	
-#    print (new.adj)
+    print (new.adjacent)
 
 
     global pub
