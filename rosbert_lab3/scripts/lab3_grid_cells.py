@@ -11,6 +11,7 @@ import numpy
 import math 
 import rospy, tf, numpy, math
 import networkx as nx
+import copy
 
 import heapq
 nx
@@ -92,13 +93,25 @@ def readGoal(goal):
 #returns in meters the point of the current index
 def getPointFromIndex(index):
 	point=Point()
+	point.x=getX(index)
+	point.y=getY(index)
+	point.z=0
+	return point
+
+# returns the index number given a point in the world
+def getIndexFromPoint(x,y):
+	return int(((y)*width) + x)
+
+#returns in meters the point of the current index
+def getWorldPointFromIndex(index):
+	point=Point()
 	point.x=(getX(index)*resolution)+offsetX + (1.5 * resolution)
 	point.y=(getY(index)*resolution)+offsetY - (.5 * resolution)
 	point.z=0
 	return point
 
 # returns the index number given a point in the world
-def getIndexFromPoint(x,y):
+def getIndexFromWorldPoint(x,y):
 	#calculate the index coordinates
 	indexX = (x-offsetX - (1.5*resolution))/resolution
 	indexY = (y-offsetY + (.5*resolution))/resolution
@@ -130,58 +143,90 @@ def findConnected(node):
 
 #returns the x value of the index
 def getX(index):
-	if (index % width) == 0:
-		return width
+	adjusted = index + 1
+	if (adjusted % width) == 0:
+		return width - 1
 	else:
-		return (index % width)
+		return (adjusted % width) - 1
 
 #returns the y value of the index
 def getY(index):
-	return math.ceil(index/width)
+	adjusted = index
+	return math.floor(adjusted/width)
 	
 #checks if the passed point is in the map
 def isInMap(point):
 	#catch if point is negative
-	if(point < 0):
+	if(point.x < 0 or point.y < 0):
 		return False
 	# is point within 0 and width and 0 and height?
-	if( ( 0 <= getX(point) and width >= getX(point)) and ( 0 <= getY(point) and height >= getY(point))):
+	if( ( 0 <= point.x and width > point.x) and ( 0 <= point.y and height > point.y)):
 		return True
 	else:
 		return False
 
 #returns index of point above this one, only works for non-first row
-def indexAbove(index):
-	return index - width
+def pointAbove(point):
+	output = copy.deepcopy(point)
+	output.y += 1
+	return output
 
 #returns index of point below this one, only works for non-last row
-def indexBelow(index):
-	return index + width
+def pointBelow(point):
+	output = copy.deepcopy(point)
+	output.y -= 1
+	return output
 
 #returns index of point right of this one, only works for non-last column
-def indexRight(index):
-	return index + 1
+def pointRight(point):
+	output = copy.deepcopy(point)
+	output.x += 1
+	return output
 
 #returns index of point right of this one, only works for non-first column
-def indexLeft(index):
-	return index - 1
+def pointLeft(point):
+	output = copy.deepcopy(point)
+	output.x -= 1
+	return output
 
 #this adds the edges to the graphs
 def linkMap():	 
 	for i in range(0, height*width):
-		#print i
+		currentPoint = Point()
+		currentPoint.x = getX(i)
+		currentPoint.y = getY(i)
+		#print "I is %i, x is %i, y is %i" % (i, currentPoint.x, currentPoint.y)
 		# try adding north
-		if(isInMap(indexAbove(i))):	
-			G[i].addAdjacent(indexAbove(i))
+		if(isInMap(pointAbove(currentPoint))):	
+			myPoint = pointAbove(currentPoint)
+			#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
+		currentPoint.x = getX(i)
+		currentPoint.y = getY(i)
 		# try adding east
-		if(isInMap(indexRight(i))):		
-			G[i].addAdjacent(indexRight(i))
-	#	# try adding south
-		if(isInMap(indexBelow(i))):
-			G[i].addAdjacent(indexBelow(i))
-	#	# try adding west
-		if(isInMap(indexLeft(i))):
-			G[i].addAdjacent(indexLeft(i))
+		if(isInMap(pointRight(currentPoint))):
+			myPoint = pointRight(currentPoint)
+			#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
+		currentPoint.x = getX(i)
+		currentPoint.y = getY(i)
+		# try adding south
+		if(isInMap(pointBelow(currentPoint))):
+			myPoint = pointBelow(currentPoint)
+			#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
+		currentPoint.x = getX(i)
+		currentPoint.y = getY(i)
+		# try adding west
+		if(isInMap(pointLeft(currentPoint))):
+			myPoint = pointLeft(currentPoint)
+			#print "My Point X: %i Y: %i  calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
+	for i in range(0, height*width):
+		print "I is %i" % i
+		print G[i].adjacent
+#takes map data and converts it into nodes, calls linkMap function
+>>>>>>> origin/CB_Lab_3
 
 
 #takes map data and converts it into nodes, calls linkMap function
