@@ -35,6 +35,7 @@ class aNode:
 		self.huer = huer 
 		self.g = g 
 		self.adjacent = list()
+		self.f = 0
 	def addAdjacent(self, index):
 		
 		self.adjacent.append(index,)
@@ -63,9 +64,13 @@ def readStart(_startPos):
     global startPosX
     global startPosY
     global startPos
+    global startIndex
+	
     startPos = _startPos
     startPosX = startPos.pose.pose.position.x
     startPosY = startPos.pose.pose.position.y
+    
+    startIndex = getIndexFromPoint(startPosX, startPosY)
     print "Printing start pose"
     print startPos.pose.pose
 
@@ -74,8 +79,12 @@ def readGoal(goal):
     goalRead = True
     global goalX
     global goalY
+    global goalIndex
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
+	
+    goalIndex = getIndexFromPoint(goalX,goalY)
+	
     print "Printing goal pose"
     print goal.pose
 
@@ -92,7 +101,11 @@ def getIndexFromPoint(x,y):
 	#calculate the index coordinates
 	indexX = (x-offsetX - (1.5*resolution))/resolution
 	indexY = (y-offsetY + (.5*resolution))/resolution
-	return ((indexY-1)*width) + indexX
+	
+	index = int (((indexY-1)*width) + indexX) 
+	
+	print index	
+	return index
 
 def heuristic(index): 
 	current = getPointFromIndex(index)
@@ -168,15 +181,13 @@ def linkMap():
 	#	# try adding west
 		if(isInMap(indexLeft(i))):
 			G[i].addAdjacent(indexLeft(i))
-	for i in range(0, height*width):
-		print G[i].adjacent
-#takes map data and converts it into nodes, calls linkMap function
 
+
+#takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
 	global frontier
 	for i in range(0, width*height):
-		print i
-		print mapData[i]
+
 		node = aNode(i,mapData[i],heuristic(i),0.0, 0)
 		G.append(node) 
 		frontier.append(0)
@@ -193,24 +204,32 @@ def checkIsShortestPath (something):
 	#TODO
 	pass 
 
+def calcG(currentG, neighborG):
+	if (neighborG == 0): 
+		neighborG = currentG + 1
+	return neighborG
+
 def adjCellCheck(current):
 	global adjList
 	adjList =  current.adjacent ## list of indexes of neighbor 
-	 
-	
-	for node in adjList:
-		print(adjList[node].index)
-		currCell = adjList.index(i)
-		if(currCell != 100): 
-			print (currCell) 
+	print adjList
+	print len(adjList)
+	for index in adjList:
+		currCell = G[index] 
+		print currCell.val
+		if(currCell.val != 100): 
+			openSet.append(currCell)
+			currCell.g = calcG(current.g, currCell.g)
+			currCell.f = currCell.g + currCell.huer 
+			
+			print (currCell.index)
+			print "finished cond"  
 			##if(currCell not in closeSet): 
 			#	if(currCell not in openSet): 
 			#		openSet.put(currCell) 
 			#	#else if( check shortest path) 
 					#calc G + h
-		else:
-			 break
-			## unfinished A* stuff... 
+		
 			## findConnected(node)
 
 #shitty sort finds lowest cost node 
@@ -231,12 +250,13 @@ def aStar():
 	initMap()  # add all nodes to grah, link all nodes
 
 	global path 
+	path = list()
 	global openSet
 	global closedSet
 	start = 11
 
 	openSet = list()
-	openSet.append(G[start])        #Add first node to openSet # set priority to distance
+	openSet.append(G[startIndex])        #Add first node to openSet # set priority to distance
 	closedSet = list()		   #everything that has been examined
 	goal = 500
 	
@@ -247,19 +267,11 @@ def aStar():
 
 	while openSet:  
 		i = lowestInQ(openSet) 
-		print "fuck"
-	 	print G[i].index
-		print G[i].adjacent
-
-		print "fuck you"
 		current = G[i]
-		
-		if (current == goal): 
+		if (current.index == goalIndex): 
 			return path
-		print len(openSet)
 		openSet.remove(current)
 		closedSet.append(current)		
-		
 		print "looking at adj" 
 		adjCellList = adjCellCheck(current)
 		print "done looking at adj"
