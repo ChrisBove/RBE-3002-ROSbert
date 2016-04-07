@@ -211,8 +211,8 @@ def adjCellCheck(current):
 #shitty sort finds lowest cost node 
 def lowestInQ(nodeSet): 
 	costList = list() 
-	for i in range (0, len(nodeSet)):
-		 costList.append(nodeSet[i].huer + nodeSet[i].g)
+	for node in nodeSet:
+		 costList.append(node.huer + node.g)
 
 	a = costList.index(min(costList))
 	mapIndex = nodeSet[a].index
@@ -238,7 +238,7 @@ def aStar():
 	
 	print len(openSet)
 	print openSet[0].index
-	
+
 	while openSet:  
 		current = lowestInQ(openSet) 
 		print current
@@ -253,8 +253,8 @@ def aStar():
 		print "done looking at adj"
  		#	if not adjCellList.empty()
 	pass		
-			
-	print "end a*"
+	
+	print "No route to goal"
 			
 ############################################# 
 #            print G.number_of_nodes()
