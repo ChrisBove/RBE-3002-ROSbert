@@ -308,7 +308,6 @@ def aStar():
 	openSet = list()
 	openSet.append(G[startIndex])        #Add first node to openSet # set priority to distance
 	closedSet = list()		   #everything that has been examined
-	goal = 500
 	
 	print "start a*"
 	
