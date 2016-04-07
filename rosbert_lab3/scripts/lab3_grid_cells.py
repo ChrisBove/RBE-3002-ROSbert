@@ -204,7 +204,6 @@ def linkMap():
 		currentPoint.x = getX(i)
 		currentPoint.y = getY(i)
 		# try adding east
-
 		if(isInMap(pointRight(currentPoint))):
 			myPoint = pointRight(currentPoint)
 			#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
@@ -226,7 +225,6 @@ def linkMap():
 	for i in range(0, height*width):
 		print "I is %i" % i
 		print G[i].adjacent
-
 
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
@@ -318,25 +316,21 @@ def aStar():
 	#print openSet[0].index
 
 	while openSet:  
-		i = lowestInQ(openSet) 
-		current = G[i]
-		# print G[i].cameFrom
-		if (current.index == goalIndex): 
-			return current.cameFrom
-		openSet.remove(current)
-		closedSet.append(current)		
-		adjCellList = adjCellCheck(current)
-		
- 				
+
+		try:
+			i = lowestInQ(openSet) 
+			current = G[i]
+			#print G[i].cameFrom
+			if (current.index == goalIndex): 
+				return current.cameFrom
+			openSet.remove(current)
+			closedSet.append(current)		
+			adjCellList = adjCellCheck(current)
+		except KeyboardInterrupt: 
+			break
+ 	
 	print "No route to goal"
 			
-############################################# 
-#            print G.number_of_nodes()
-
-#    for i in range(1,height*width):
-#        if mapData[i] == 0: 
-#           G.add_node(i,weight = mapData[i])
-#            print G.number_of_nodes()
 
 
 
