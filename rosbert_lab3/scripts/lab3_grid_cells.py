@@ -363,12 +363,12 @@ def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzag
 	for i,node in enumerate(path):
 		if(i+1 < len(path)):
 			nextNode = path[i+1]
-			nextNodeX = getPointFromIndex(nextNode).x
-			nextNodeY = getPointFromIndex(nextNode).y
+			nextNodeX = getWorldPointFromIndex(nextNode).x
+			nextNodeY = getWorldPointFromIndex(nextNode).y
 
 			currNode = path[i]
-			currNodeX = getPointFromIndex(currNode).x
-			currNodeY = getPointFromIndex(currNode).y
+			currNodeX = getWorldPointFromIndex(currNode).x
+			currNodeY = getWorldPointFromIndex(currNode).y
 			if( not returnPath):
 				averagePoint.x = (currNodeX+nextNodeX)/2
 				averagePoint.y = (currNodeY+nextNodeY)/2
