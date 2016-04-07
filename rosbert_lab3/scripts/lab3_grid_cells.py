@@ -12,6 +12,33 @@ import math
 import rospy, tf, numpy, math
 import networkx as nx
 
+import heapq
+nx
+
+## implementation from Python Cookbook
+class PriorityQueue:
+    def __init__(self):
+        self._queue = []
+        self._index = 0
+
+    def push(self, item, priority):
+        heapq.heappush(self._queue, (priority, self._index, item))
+        self._index += 1
+
+    def pop(self):
+        return heapq.heappop(self._queue)[-1]
+	
+class aNode: 
+	def __init__(self, index, val, huer, g, adjacent): 
+		self.index = index
+		self.val = val 
+		self.huer = huer 
+		self.g = g 
+		self.adjacent = list()
+	def addAdjacent(self, index):
+		
+		self.adjacent.append(index,)
+
 # reads in global map
 def mapCallBack(data):
     global mapData
@@ -54,13 +81,18 @@ def readGoal(goal):
 
 #returns in meters the point of the current index
 def getPointFromIndex(index):
-	i = getX(index)
-	j = getY(index)
 	point=Point()
-	point.x=(j*resolution)+offsetX + (1.5 * resolution)
-	point.y=(i*resolution)+offsetY - (.5 * resolution)
+	point.x=(getX(index)*resolution)+offsetX + (1.5 * resolution)
+	point.y=(getY(index)*resolution)+offsetY - (.5 * resolution)
 	point.z=0
 	return point
+
+# returns the index number given a point in the world
+def getIndexFromPoint(x,y):
+	#calculate the index coordinates
+	indexX = (x-offsetX - (1.5*resolution))/resolution
+	indexY = (y-offsetY + (.5*resolution))/resolution
+	return ((indexY-1)*width) + indexX
 
 def heuristic(index): 
 	current = getPointFromIndex(index)
@@ -70,19 +102,16 @@ def heuristic(index):
 	h = (dx+dy)
 	return h
 
-def nodeToXY(node): #not sure if this is needed - find x and y coordinates of a node
-	#TODO
-	pass  
-def xyToNode(x, y): #I think this is needed to convert start pose (x,y,z) to a node that is in the map 
-	#TODO
-	pass 
+
 def findConnected(node):
+
 	neighborhood = G.neighbors(node)
 	print "Printing neighborhood"
 	for node in neighborhood:
 		frontier[node] = 100
 	publishFrontier(frontier)
 	return neighborhood
+
 
 
 #returns the x value of the index
@@ -125,33 +154,31 @@ def indexLeft(index):
 
 #this adds the edges to the graphs
 def linkMap():	 
-	for i in range(1, height*width):
+	for i in range(0, height*width):
+		
 		# try adding north
 		if(isInMap(i)):
-			G.add_edge(i, indexAbove(i))
+			G[i].addAdjacent(indexAbove(i))
 		# try adding east
+		if(isInMap(i)):		
+			G[i].addAdjacent(indexRight(i))
+	#	# try adding south
 		if(isInMap(i)):
-			G.add_edge(i, indexRight(i))
-		# try adding south
+			G[i].addAdjacent(indexBelow(i))
+	#	# try adding west
 		if(isInMap(i)):
-			G.add_edge(i, indexBelow(i))
-		# try adding west
-		if(isInMap(i)):
-			G.add_edge(i, indexLeft(i))
-
-		print G.edges()
-		print "linkMap"
+			G[i].addAdjacent(indexLeft(i))
 
 #takes map data and converts it into nodes, calls linkMap function
+
 def initMap(): 
 	global frontier
-	for i in range(1, width*height):
-		G.add_node(i,value = mapData[i],h=heuristic(i),g=0.0)
+	for i in range(0, width*height):
+	
+		node = aNode(i,mapData[i],heuristic(i),0.0, 0)
+		G.append(node) 
 		frontier.append(0)
 	linkMap()
-    
-
-
 #check's and/or compute's cell's g-score based on current g-score
 def gScore(cumulativeScore,index): 
 	#TODO
@@ -162,47 +189,73 @@ def checkIsShortestPath (something):
 	#TODO
 	pass 
 
-def adjCellCheck(cellList):
-	for i in range(1, len(cellList)):
-		currCell = cellList.index(i)
-		if(currCell != 100):  
-			if( currCell not in closeSet): 
-				if(currCell not in openSet): 
-					openSet.add(currCell) 
+def adjCellCheck(current):
+	global adjList
+	adjList =  G[current].adjacent
+	 
+	print(adjList)
+	for i in range(1, len(adjList)):
+		currCell = adjList.index(i)
+		if(currCell != 100): 
+			print (currCell) 
+			##if(currCell not in closeSet): 
+			#	if(currCell not in openSet): 
+			#		openSet.put(currCell) 
+			#	#else if( check shortest path) 
+					#calc G + h
+		else:
+			 break
 			## unfinished A* stuff... 
+			## findConnected(node)
+
+#shitty sort finds lowest cost node 
+def lowestInQ(nodeSet): 
+	costList = list() 
+	for i in range (0, len(nodeSet)):
+		 costList.append(nodeSet[i].huer + nodeSet[i].g)
+
+	a = costList.index(min(costList))
+	return a
+	
 
 def aStar():
 	global G
-	G = nx.Graph()
+	G = list()
 	initMap()  # add all nodes to grah, link all nodes
-	
-	for line in nx.generate_edgelist(G, data=['weight']): 
-		print(line)
-	print(nx.all_neighbors(G,1))
-
 
 	global path 
 	global openSet
 	global closedSet
-	#openSet = PriorityQueue()  #frontier - unexplored 
-	#openSet.put(start,0)        
-	#closedSet = set()		   #everything that has been examined
-	#gScore = list() 
-	#fScore = list()  
-	#gScore[start] = 0								
-	#fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
+	path = nx.Graph()
+	start = 0
+	path.add_node(start)
+	openSet = list()
+	openSet.append(G[0])        # set priority to distance
+	openSet.append(G[2])
+	closedSet = set()		   #everything that has been examined
+	gScore = list() 
+	fScore = list()  
+#	gScore[start] = 0								
+#	fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
+	goal = 500
 	
-#	while not openSet.empty():  
-#		current = openSet.get()
-#		closeSet.add(current)
-#		if current == goal: 
-#			return path
-#
-#		else:
-#			adjCellList = getAdj(current)
-# 			if not adjCellList.empty()
-#				
+	print "start a*"
+	
+	while openSet:  
+		lowestInQ(openSet)
+		#current = (lowest) 
+		closedSet.add(current)
+		if current == goal: 
+			return smoothPath(path)
+		else:
+			print "looking at adj" 
+			adjCellList = adjCellCheck(current)
+			print "done looking at adj"
+ 		#	if not adjCellList.empty()
+	pass		
 			
+	print "end a*"
+
 			
 ############################################# 
 #            print G.number_of_nodes()
@@ -229,9 +282,23 @@ def parsePath(path):  #takes A* path, output the nodes where the path changes di
 	pass 
 def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzags 
 	#TODO
-	for node in path
-		getPointFromIndex(node.index)
-	pass
+	returnPath = list()
+	averagePoint = Point()
+	for i,node in enumerate(path)
+		nextNode = path[index+1]
+		nextNodeX = getPointFromIndex(nextNode.index).x
+		nextNodeY = getPointFromIndex(nextNode.index).y
+
+		currNode = path[index]
+		currNodeX = getPointFromIndex(currNode.index).x
+		currNodeY = getPointFromIndex(currNode.index).y
+
+		averagePoint.x = (currNodeX+nextNodeX)/2)
+		averagePoint.y = (currNodeY+nextNodeY))/2)
+		averagePoint.z = atan2(currNodeY-nextNodeY, currNodeX-nextNodeX)
+		returnPath.append(averagePoint)
+
+	return returnPath
 
 
 #publishes map to rviz using gridcells type
@@ -286,26 +353,43 @@ def publishFrontier(grid):
     pub_frontier.publish(cells)  
 
 
+
+
+
+
 #Main handler of the project
 def run():
+
+	
+  
+
+
     global pub
+
     global frontier
     frontier = list()
+
     global startRead
     global goalRead
     startRead = False
     goalRead = False
+    global pub_frontier
+    global frontier
+    frontier = list()
+
+
+
+
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pubpath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
+    frontier_pub = rospy.Subscriber('map_cells/frontier', GridCells, queue_size=1)
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
-    pub_frontier = rospy.Publisher("/grid_cells/frontier",GridCells,queue_size=10)
     # wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
-
 
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
