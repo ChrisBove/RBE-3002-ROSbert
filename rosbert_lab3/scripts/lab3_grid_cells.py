@@ -263,8 +263,8 @@ def evalNeighbor(nNode, current):
 		if (nNode not in openSet) or (tentative < nNode.g): 
 			if (nNode not in openSet):
 				openSet.append(nNode)
-			nNode.g = calcG(current.g, nNode.g)
-			nNode.f = nNode.g + nNode.huer 
+			nNode.g = calcG(current.g+nNode.g, nNode.g)
+			nNode.f = nNode.g + 2*nNode.huer 
 			G[nNode.index].cameFrom = current.index
 	#is in the closed set
 	else:
@@ -274,7 +274,7 @@ def evalNeighbor(nNode, current):
 def lowestInQ(nodeSet): 
 	costList = list() 
 	for node in nodeSet:
-		costList.append(node.huer + node.g)
+		costList.append(node.f)
 
 	a = costList.index(min(costList))
 	mapIndex = nodeSet[a].index
