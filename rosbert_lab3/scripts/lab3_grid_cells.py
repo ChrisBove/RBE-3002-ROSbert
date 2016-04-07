@@ -37,7 +37,7 @@ class aNode:
 		self.g = g 
 		self.adjacent = list()
 		self.f = 0
-		self.cameFrom = 0
+		self.cameFrom = -1
 	def addAdjacent(self, index):
 		self.adjacent.append(index)
 	def addParent(self, index): 
@@ -298,14 +298,11 @@ def lowestInQ(nodeSet):
 def reconPath(current, start): 
 	total_path = list()
 	total_path.append(current.index)
-	i = False 		
-	while not i:
-		if current.cameFrom is not start.index: 			
-			current = G[current.cameFrom]
-			total_path.append(current.cameFrom)		
-			
-	else: 
-		i = True 
+	 		
+	while (current.cameFrom != -1):
+		current = G[current.cameFrom]
+		total_path.append(current.cameFrom)		
+			 
 	return total_path
 def aStar():
 	
