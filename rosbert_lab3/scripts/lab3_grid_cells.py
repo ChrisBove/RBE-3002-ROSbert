@@ -253,8 +253,8 @@ def checkIsShortestPath (something):
 
 def calcG(currentG, neighborG):
 	if (neighborG == 0): 
-		neighborG = currentG + 1
-	return neighborG*resolution
+		neighborG = currentG + resolution
+	return neighborG
 	
 	
 def adjCellCheck(current):
@@ -279,7 +279,7 @@ def evalNeighbor(nNode, current):
 			if (nNode not in openSet):
 				openSet.append(nNode)
 			nNode.g = calcG(current.g, nNode.g)
-			nNode.f = nNode.huer #nNode.g + nNode.huer 
+			nNode.f = nNode.g + nNode.huer 
 			cameFromList = (current.cameFrom)
 			cameFromList.append(current.index)
 			G[nNode.index].addParent(cameFromList)
@@ -291,7 +291,7 @@ def evalNeighbor(nNode, current):
 def lowestInQ(nodeSet): 
 	costList = list() 
 	for node in nodeSet:
-		costList.append(node.huer)#node.huer + node.g)
+		costList.append(node.huer + node.g)
 
 	a = costList.index(min(costList))
 	mapIndex = nodeSet[a].index
