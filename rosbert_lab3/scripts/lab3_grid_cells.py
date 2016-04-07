@@ -253,7 +253,6 @@ def aStar():
 		print "done looking at adj"
  		#	if not adjCellList.empty()
 	pass		
-	
 	print "No route to goal"
 			
 ############################################# 
