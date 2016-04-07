@@ -264,12 +264,12 @@ def aStar():
 	print "start a*"
 	
 	print len(openSet)
-	print openSet[0].index
+	#print openSet[0].index
 
 	while openSet:  
 		i = lowestInQ(openSet) 
 		current = G[i]
-		print G[i].cameFrom
+		#print G[i].cameFrom
 		if (current.index == goalIndex): 
 			return current.cameFrom
 		openSet.remove(current)
