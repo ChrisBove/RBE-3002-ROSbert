@@ -359,8 +359,8 @@ def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzag
 	#TODO
 
 	returnPath = list()
-	averagePoint = Point()
 	for i,node in enumerate(path):
+		averagePoint = Point()
 		if(i+1 < len(path)):
 			nextNode = path[i+1]
 			nextNodeX = getWorldPointFromIndex(nextNode).x
@@ -378,7 +378,7 @@ def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzag
 				averagePoint.y = (returnPath[i-1].y+currNodeY)/2
 				averagePoint.z = math.atan2(currNodeY-returnPath[i-1].y, currNodeX-returnPath[i-1].x)
 			returnPath.append(averagePoint)
-
+			print "Average Point in Path: X: %f Y: %f" % (averagePoint.x, averagePoint.y)
 	return returnPath
 
 
@@ -462,6 +462,7 @@ def publishPath(grid):
         point=Point()
         point = node
         cells.cells.append(point)
+	print "Point in Path: X: %f Y: %f" % (point.x, point.y)
     pub_path.publish(cells)  
 
 def pubGoal(grid):
