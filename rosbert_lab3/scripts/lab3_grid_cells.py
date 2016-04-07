@@ -86,7 +86,6 @@ def readGoal(goal):
     goalY= goal.pose.position.y
 	
     goalIndex = getIndexFromPoint(goalX,goalY)
-	
     print "Printing goal pose"
     print goal.pose
 
@@ -214,11 +213,14 @@ def calcG(currentG, neighborG):
 	
 def adjCellCheck(current):
 	global adjList
+	global frontier
 	adjList =  current.adjacent ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
 		if(currCell.val != 100): 
-			evalNeighbor(currCell, current) 	
+			evalNeighbor(currCell, current) 
+		frontier.append(G[index])
+	publishFrontier(frontier)
 						
 
 def evalNeighbor(nNode, current): 
@@ -256,6 +258,9 @@ def aStar():
 	global closedSet
 	start = 11
 
+	global frontier
+	frontier = list()
+
 	openSet = list()
 	openSet.append(G[startIndex])        #Add first node to openSet # set priority to distance
 	closedSet = list()		   #everything that has been examined
@@ -269,7 +274,7 @@ def aStar():
 	while openSet:  
 		i = lowestInQ(openSet) 
 		current = G[i]
-		#print G[i].cameFrom
+		# print G[i].cameFrom
 		if (current.index == goalIndex): 
 			return current.cameFrom
 		openSet.remove(current)
@@ -416,7 +421,8 @@ def run():
     pubpath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
-    frontier_pub = rospy.Subscriber('map_cells/frontier', GridCells, queue_size=1)
+    pub_traverse = rospy.Publisher('map_cells/traversal', GridCells, queue_size=1)
+    pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
     # wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
