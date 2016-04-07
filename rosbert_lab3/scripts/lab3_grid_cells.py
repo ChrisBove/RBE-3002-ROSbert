@@ -272,8 +272,9 @@ def adjCellCheck(current):
 def evalNeighbor(nNode, current): 
 	if(nNode not in closedSet): 
 		tentative = current.g + resolution 
-		if (nNode not in openSet) or (tentative < nNode.g):  
-			openSet.append(nNode)
+		if (nNode not in openSet) or (tentative < nNode.g): 
+			if (nNode not in openSet):
+				openSet.append(nNode)
 			nNode.g = calcG(current.g, nNode.g)
 			nNode.f = nNode.huer #nNode.g + nNode.huer 
 			cameFromList = (current.cameFrom)
