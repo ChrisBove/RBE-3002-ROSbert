@@ -382,8 +382,6 @@ def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzag
 	return returnPath
 
 def noFilter(path): #takes the parsed path & tries to remove unecessary zigzags 
-	#TODO
-
 	returnPath = list()
 	for i,node in enumerate(path):
 		point = Point()
@@ -393,7 +391,7 @@ def noFilter(path): #takes the parsed path & tries to remove unecessary zigzags
 		point.z = 0
 		
 		returnPath.append(point)
-		print "Point in Path: X: %f Y: %f" % (averagePoint.x, averagePoint.y)
+		print "Point in Path: X: %f Y: %f" % (point.x, point.y)
 	return returnPath
 
 #publishes map to rviz using gridcells type
@@ -528,7 +526,7 @@ def run():
         if startRead and goalRead:
             path = aStar()
             print "Going to publish path"
-            publishPath(smoothPath(path))
+            publishPath(noFilter(path))
             goalRead = False
         rospy.sleep(2)  
         print("Complete")
