@@ -354,20 +354,31 @@ def publishFrontier(grid):
     cells.cell_width = resolution 
     cells.cell_height = resolution
 
-    for i in range(1,height): #height should be set to hieght of grid
-        k=k+1
-        for j in range(1,width): #width should be set to width of grid
-            k=k+1
-            #print k # used for debugging
-            if (grid[k] == 100):
-                point=Point()
-                point.x=(j*resolution)+offsetX + (1.5 * resolution) # added secondary offset 
-                point.y=(i*resolution)+offsetY - (.5 * resolution) # added secondary offset ... Magic ?
-                point.z=0
-                cells.cells.append(point)
+    for node in grid:
+        point=Point()
+        point = getPointFromIndex(node.index)
+        cells.cells.append(point)
     pub_frontier.publish(cells)  
 
 
+
+
+def publishTraversal(grid):
+    global pub_traverse
+    print "publishing traversal"
+
+        # resolution and offset of the map
+    k=0
+    cells = GridCells()
+    cells.header.frame_id = 'map'
+    cells.cell_width = resolution 
+    cells.cell_height = resolution
+
+    for node in grid:
+        point=Point()
+        point = getPointFromIndex(node.index)
+        cells.cells.append(point)
+    pub_traverse.publish(cells)  
 
 
 
