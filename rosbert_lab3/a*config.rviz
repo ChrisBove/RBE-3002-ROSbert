@@ -124,6 +124,11 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        mount_asus_xtion_pro_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         plate_bottom_link:
           Alpha: 1
           Show Axes: false
@@ -330,10 +335,10 @@ Visualization Manager:
         Z: 0.0840121
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.5698
+      Pitch: 1.5448
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.1404
+      Yaw: 3.1604
     Saved: ~
 Window Geometry:
   Displays:
@@ -351,5 +356,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 927
-  X: 982
+  X: 55
   Y: 14

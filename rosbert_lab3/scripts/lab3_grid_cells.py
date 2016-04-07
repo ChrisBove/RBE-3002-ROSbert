@@ -130,8 +130,8 @@ def isInMap(point):
 	#catch if point is negative
 	if(point < 0):
 		return False
-	# is point within 1 and width and 1 and height?
-	if( ( 1 <= getX(point) and width >= getX(point)) and ( 1 <= getY(point) and height >= getY(point))):
+	# is point within 0 and width and 0 and height?
+	if( ( 0 <= getX(point) and width >= getX(point)) and ( 0 <= getY(point) and height >= getY(point))):
 		return True
 	else:
 		return False
@@ -155,30 +155,34 @@ def indexLeft(index):
 #this adds the edges to the graphs
 def linkMap():	 
 	for i in range(0, height*width):
-		
+		#print i
 		# try adding north
-		if(isInMap(i)):
+		if(isInMap(indexAbove(i))):	
 			G[i].addAdjacent(indexAbove(i))
 		# try adding east
-		if(isInMap(i)):		
+		if(isInMap(indexRight(i))):		
 			G[i].addAdjacent(indexRight(i))
 	#	# try adding south
-		if(isInMap(i)):
+		if(isInMap(indexBelow(i))):
 			G[i].addAdjacent(indexBelow(i))
 	#	# try adding west
-		if(isInMap(i)):
+		if(isInMap(indexLeft(i))):
 			G[i].addAdjacent(indexLeft(i))
-
+	for i in range(0, height*width):
+		print G[i].adjacent
 #takes map data and converts it into nodes, calls linkMap function
 
 def initMap(): 
 	global frontier
 	for i in range(0, width*height):
-	
+		print i
+		print mapData[i]
 		node = aNode(i,mapData[i],heuristic(i),0.0, 0)
 		G.append(node) 
 		frontier.append(0)
+	print len(G)	
 	linkMap()
+	
 #check's and/or compute's cell's g-score based on current g-score
 def gScore(cumulativeScore,index): 
 	#TODO
@@ -191,10 +195,11 @@ def checkIsShortestPath (something):
 
 def adjCellCheck(current):
 	global adjList
-	adjList =  G[current].adjacent ## list of indexes of neighbor 
+	adjList =  current.adjacent ## list of indexes of neighbor 
 	 
-	print(adjList)
-	for i in range(1, len(adjList)):
+	
+	for node in adjList:
+		print(adjList[node].index)
 		currCell = adjList.index(i)
 		if(currCell != 100): 
 			print (currCell) 
@@ -220,6 +225,7 @@ def lowestInQ(nodeSet):
 	
 
 def aStar():
+	
 	global G
 	G = list()
 	initMap()  # add all nodes to grah, link all nodes
@@ -240,13 +246,19 @@ def aStar():
 	print openSet[0].index
 
 	while openSet:  
-		current = lowestInQ(openSet) 
-		print current
+		i = lowestInQ(openSet) 
+		print "fuck"
+	 	print G[i].index
+		print G[i].adjacent
+
+		print "fuck you"
+		current = G[i]
 		
 		if (current == goal): 
 			return path
+		print len(openSet)
 		openSet.remove(current)
-		closedSet.append(G[current])		
+		closedSet.append(current)		
 		
 		print "looking at adj" 
 		adjCellList = adjCellCheck(current)
