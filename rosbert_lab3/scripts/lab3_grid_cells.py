@@ -291,7 +291,29 @@ def parsePath(path):  #takes A* path, output the nodes where the path changes di
 	pass 
 def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzags 
 	#TODO
-	pass
+
+	returnPath = list()
+	averagePoint = Point()
+	for i,node in enumerate(path):
+		nextNode = path[index+1]
+		nextNodeX = getPointFromIndex(nextNode.index).x
+		nextNodeY = getPointFromIndex(nextNode.index).y
+
+		currNode = path[index]
+		currNodeX = getPointFromIndex(currNode.index).x
+		currNodeY = getPointFromIndex(currNode.index).y
+		if( not returnPath):
+			averagePoint.x = (currNodeX+nextNodeX)/2
+			averagePoint.y = (currNodeY+nextNodeY)/2
+			averagePoint.z = atan2(currNodeY-nextNodeY, currNodeX-nextNodeX)
+		else:
+			averagePoint.x = (returnPath[i-1].x+currNodeX)/2
+			averagePoint.y = (returnPath[i-1].y+currNodeY)/2
+			averagePoint.z = atan2(currNodeY-returnPath[i-1].y, currNodeX-returnPath[i-1].x)
+		returnPath.append(averagePoint)
+
+	return returnPath
+
 
 
 #publishes map to rviz using gridcells type
