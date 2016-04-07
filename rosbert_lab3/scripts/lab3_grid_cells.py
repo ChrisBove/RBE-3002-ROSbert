@@ -36,9 +36,11 @@ class aNode:
 		self.g = g 
 		self.adjacent = list()
 		self.f = 0
+		self.cameFrom = list()
 	def addAdjacent(self, index):
-		
-		self.adjacent.append(index,)
+		self.adjacent.append(index)
+	def addParent(self, index): 
+		self.cameFrom = (index)
 
 # reads in global map
 def mapCallBack(data):
@@ -208,29 +210,28 @@ def calcG(currentG, neighborG):
 	if (neighborG == 0): 
 		neighborG = currentG + 1
 	return neighborG
-
+	
+	
 def adjCellCheck(current):
 	global adjList
 	adjList =  current.adjacent ## list of indexes of neighbor 
-	print adjList
-	print len(adjList)
 	for index in adjList:
 		currCell = G[index] 
-		print currCell.val
 		if(currCell.val != 100): 
-			openSet.append(currCell)
-			currCell.g = calcG(current.g, currCell.g)
-			currCell.f = currCell.g + currCell.huer 
-			
-			print (currCell.index)
-			print "finished cond"  
-			##if(currCell not in closeSet): 
-			#	if(currCell not in openSet): 
-			#		openSet.put(currCell) 
-			#	#else if( check shortest path) 
-					#calc G + h
-		
-			## findConnected(node)
+			evalNeighbor(currCell, current) 	
+						
+
+def evalNeighbor(nNode, current): 
+	if(nNode not in closedSet): 
+		tentative = current.g + 1 
+		if (nNode not in openSet) or (tentative < nNode.g):  
+			openSet.append(nNode)
+			nNode.g = calcG(current.g, nNode.g)
+			nNode.f = nNode.g + nNode.huer 
+			cameFromList = (current.cameFrom)
+			cameFromList.append(current.index)
+			G[nNode.index].addParent(cameFromList)
+
 
 #shitty sort finds lowest cost node 
 def lowestInQ(nodeSet): 
@@ -268,15 +269,14 @@ def aStar():
 	while openSet:  
 		i = lowestInQ(openSet) 
 		current = G[i]
+		print G[i].cameFrom
 		if (current.index == goalIndex): 
-			return path
+			return current.cameFrom
 		openSet.remove(current)
 		closedSet.append(current)		
-		print "looking at adj" 
 		adjCellList = adjCellCheck(current)
-		print "done looking at adj"
- 		#	if not adjCellList.empty()
-	pass		
+		
+ 				
 	print "No route to goal"
 			
 ############################################# 
