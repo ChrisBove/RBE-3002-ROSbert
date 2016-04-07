@@ -29,14 +29,15 @@ class PriorityQueue:
         return heapq.heappop(self._queue)[-1]
 	
 class aNode: 
-	def __init__(self, index, val, huer, g): 
+	def __init__(self, index, val, huer, g, adjacent): 
 		self.index = index
 		self.val = val 
 		self.huer = huer 
 		self.g = g 
 		self.adjacent = list()
 	def addAdjacent(self, index):
-		self.adjacent.append(index)
+		
+		self.adjacent.append(index,)
 
 # reads in global map
 def mapCallBack(data):
@@ -153,34 +154,31 @@ def indexLeft(index):
 
 #this adds the edges to the graphs
 def linkMap():	 
-	for i in range(1, height*width):
-
+	for i in range(0, height*width):
+		
 		# try adding north
 		if(isInMap(i)):
-			G.add_edge(i, indexAbove(i))
+			G[i].addAdjacent(indexAbove(i))
 		# try adding east
+		if(isInMap(i)):		
+			G[i].addAdjacent(indexRight(i))
+	#	# try adding south
 		if(isInMap(i)):
-			G.add_edge(i, indexRight(i))
-		# try adding south
+			G[i].addAdjacent(indexBelow(i))
+	#	# try adding west
 		if(isInMap(i)):
-			G.add_edge(i, indexBelow(i))
-		# try adding west
-		if(isInMap(i)):
-			G.add_edge(i, indexLeft(i))
-
-		print G.edges()
+			G[i].addAdjacent(indexLeft(i))
 
 #takes map data and converts it into nodes, calls linkMap function
 
 def initMap(): 
 	global frontier
-	for i in range(1, width*height):
-		G.add_node(i,value = mapData[i],h=heuristic(i),g=0.0)
+	for i in range(0, width*height):
+	
+		node = aNode(i,mapData[i],heuristic(i),0.0, 0)
+		G.append(node) 
 		frontier.append(0)
 	linkMap()
-	#for node in G: 
-	#	findConnected(node)
-
 #check's and/or compute's cell's g-score based on current g-score
 def gScore(cumulativeScore,index): 
 	#TODO
@@ -193,8 +191,8 @@ def checkIsShortestPath (something):
 
 def adjCellCheck(current):
 	global adjList
-	adjList = list()
-	adjList = findConnected(current) 
+	adjList =  G[current].adjacent
+	 
 	print(adjList)
 	for i in range(1, len(adjList)):
 		currCell = adjList.index(i)
@@ -210,6 +208,16 @@ def adjCellCheck(current):
 			## unfinished A* stuff... 
 			## findConnected(node)
 
+#shitty sort finds lowest cost node 
+def lowestInQ(nodeSet): 
+	costList = list() 
+	for i in range (0, len(nodeSet)):
+		 costList.append(nodeSet[i].huer + nodeSet[i].g)
+
+	a = costList.index(min(costList))
+	return a
+	
+
 def aStar():
 	global G
 	G = list()
@@ -221,9 +229,9 @@ def aStar():
 	path = nx.Graph()
 	start = 0
 	path.add_node(start)
-	openSet = PriorityQueue()  #frontier - unexplored 
-	openSet.push(start,0)        # set priority to distance
-	openSet.push(5,1)
+	openSet = list()
+	openSet.append(G[0])        # set priority to distance
+	openSet.append(G[2])
 	closedSet = set()		   #everything that has been examined
 	gScore = list() 
 	fScore = list()  
@@ -234,7 +242,8 @@ def aStar():
 	print "start a*"
 	
 	while openSet:  
-		current = openSet.pop()
+		lowestInQ(openSet)
+		#current = (lowest) 
 		closedSet.add(current)
 		if current == goal: 
 			return path
@@ -333,10 +342,8 @@ def publishFrontier(grid):
 #Main handler of the project
 def run():
 
-    new = aNode(1, 100, 5, 0)
-    new.addAdjacent(5)
 	
-    print (new.adjacent)
+  
 
 
     global pub
