@@ -191,7 +191,7 @@ def checkIsShortestPath (something):
 
 def adjCellCheck(current):
 	global adjList
-	adjList =  G[current].adjacent
+	adjList =  G[current].adjacent ## list of indexes of neighbor 
 	 
 	print(adjList)
 	for i in range(1, len(adjList)):
@@ -215,7 +215,8 @@ def lowestInQ(nodeSet):
 		 costList.append(nodeSet[i].huer + nodeSet[i].g)
 
 	a = costList.index(min(costList))
-	return a
+	mapIndex = nodeSet[a].index
+	return mapIndex
 	
 
 def aStar():
@@ -226,31 +227,30 @@ def aStar():
 	global path 
 	global openSet
 	global closedSet
-	path = nx.Graph()
-	start = 0
-	path.add_node(start)
+	start = 11
+
 	openSet = list()
-	openSet.append(G[0])        # set priority to distance
-	openSet.append(G[2])
-	closedSet = set()		   #everything that has been examined
-	gScore = list() 
-	fScore = list()  
-#	gScore[start] = 0								
-#	fScore[start] = gScore[start] + heuristic(start, goal) 	#cost so far
+	openSet.append(G[start])        #Add first node to openSet # set priority to distance
+	closedSet = list()		   #everything that has been examined
 	goal = 500
 	
 	print "start a*"
 	
+	print len(openSet)
+	print openSet[0].index
+	
 	while openSet:  
-		lowestInQ(openSet)
-		#current = (lowest) 
-		closedSet.add(current)
-		if current == goal: 
+		current = lowestInQ(openSet) 
+		print current
+		
+		if (current == goal): 
 			return path
-		else:
-			print "looking at adj" 
-			adjCellList = adjCellCheck(current)
-			print "done looking at adj"
+		openSet.remove(current)
+		closedSet.append(G[current])		
+		
+		print "looking at adj" 
+		adjCellList = adjCellCheck(current)
+		print "done looking at adj"
  		#	if not adjCellList.empty()
 	pass		
 			
@@ -341,10 +341,6 @@ def publishFrontier(grid):
 
 #Main handler of the project
 def run():
-
-	
-  
-
 
     global pub
 
