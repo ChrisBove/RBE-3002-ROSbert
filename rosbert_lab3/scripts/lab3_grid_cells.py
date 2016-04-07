@@ -230,7 +230,7 @@ def parsePath(path):  #takes A* path, output the nodes where the path changes di
 def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzags 
 	#TODO
 	for node in path
-		getPointFromIndex(node);
+		getPointFromIndex(node.index)
 	pass
 
 
