@@ -140,6 +140,7 @@ def linkMap():
 			G.add_edge(i, indexLeft(i))
 
 		print G.edges()
+		print "linkMap"
 
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
@@ -150,9 +151,6 @@ def initMap():
 	linkMap()
     
 
-
-	for node in G: 
-		findConnected(node)
 
 #check's and/or compute's cell's g-score based on current g-score
 def gScore(cumulativeScore,index): 
@@ -227,9 +225,12 @@ def aStar():
 
 def parsePath(path):  #takes A* path, output the nodes where the path changes directions  
 	#TODO
+
 	pass 
 def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzags 
 	#TODO
+	for node in path
+		getPointFromIndex(node);
 	pass
 
 
@@ -276,12 +277,12 @@ def publishFrontier(grid):
         for j in range(1,width): #width should be set to width of grid
             k=k+1
             #print k # used for debugging
-            if (grid[k] == 100):
-                point=Point()
-                point.x=(j*resolution)+offsetX + (1.5 * resolution) # added secondary offset 
-                point.y=(i*resolution)+offsetY - (.5 * resolution) # added secondary offset ... Magic ?
-                point.z=0
-                cells.cells.append(point)
+            #if (grid[k] == 100):
+            point=Point()
+            point.x=(j*resolution)+offsetX + (1.5 * resolution) # added secondary offset 
+            point.y=(i*resolution)+offsetY - (.5 * resolution) # added secondary offset ... Magic ?
+            point.z=0
+            cells.cells.append(point)
     pub_frontier.publish(cells)  
 
 
