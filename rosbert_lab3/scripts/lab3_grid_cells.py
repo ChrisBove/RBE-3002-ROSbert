@@ -73,7 +73,7 @@ def readStart(_startPos):
     startPosX = startPos.pose.pose.position.x
     startPosY = startPos.pose.pose.position.y
     
-    startIndex = getIndexFromPoint(startPosX, startPosY)
+    startIndex = getIndexFromWorldPoint(startPosX, startPosY)
     print "Printing start pose"
     print startPos.pose.pose
 
@@ -86,7 +86,7 @@ def readGoal(goal):
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
 	
-    goalIndex = getIndexFromPoint(goalX,goalY)
+    goalIndex = getIndexFromWorldPoint(goalX,goalY)
     print "Printing goal pose"
     print goal.pose
 
