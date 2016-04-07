@@ -126,13 +126,8 @@ def getIndexFromWorldPoint(x,y):
 
 def heuristic(index): 
 	current = getWorldPointFromIndex(index)
-	# calc manhattan distance
-	dx = abs(current.x - goalX) 
-	dy = abs(current.y - goalY) 
-	h = (dx+dy)
-	#print "I is %i h is %f" % (index,h)
+	h = math.sqrt(pow(goalX-current.x,2)+pow(goalY-current.y,2))
 	return h
-
 
 def findConnected(node):
 
@@ -240,16 +235,6 @@ def initMap():
 		frontier.append(0)
 	print len(G)	
 	linkMap()
-	
-#check's and/or compute's cell's g-score based on current g-score
-def gScore(cumulativeScore,index): 
-	#TODO
-	pass 
-
-	
-def checkIsShortestPath (something):
-	#TODO
-	pass 
 
 def calcG(currentG, neighborG):
 	if (neighborG == 0): 
