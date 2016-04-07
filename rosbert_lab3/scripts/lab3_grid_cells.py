@@ -372,16 +372,29 @@ def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzag
 			if( not returnPath):
 				averagePoint.x = (currNodeX+nextNodeX)/2
 				averagePoint.y = (currNodeY+nextNodeY)/2
-				averagePoint.z = math.atan2(currNodeY-nextNodeY, currNodeX-nextNodeX)
+				averagePoint.z = 0#math.atan2(currNodeY-nextNodeY, currNodeX-nextNodeX)
 			else:
 				averagePoint.x = (returnPath[i-1].x+currNodeX)/2
 				averagePoint.y = (returnPath[i-1].y+currNodeY)/2
-				averagePoint.z = math.atan2(currNodeY-returnPath[i-1].y, currNodeX-returnPath[i-1].x)
+				averagePoint.z = 0 #math.atan2(currNodeY-returnPath[i-1].y, currNodeX-returnPath[i-1].x)
 			returnPath.append(averagePoint)
 			print "Average Point in Path: X: %f Y: %f" % (averagePoint.x, averagePoint.y)
 	return returnPath
 
+def noFilter(path): #takes the parsed path & tries to remove unecessary zigzags 
+	#TODO
 
+	returnPath = list()
+	for i,node in enumerate(path):
+		point = Point()
+		currNode = path[i]
+		point.x = getWorldPointFromIndex(currNode).x
+		point.y = getWorldPointFromIndex(currNode).y
+		point.z = 0
+		
+		returnPath.append(point)
+		print "Point in Path: X: %f Y: %f" % (averagePoint.x, averagePoint.y)
+	return returnPath
 
 #publishes map to rviz using gridcells type
 
