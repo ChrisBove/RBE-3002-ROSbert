@@ -254,7 +254,7 @@ def aStar():
  		#	if not adjCellList.empty()
 	pass		
 			
-	print "end a*"
+	print "end a*" 
 
 			
 ############################################# 
