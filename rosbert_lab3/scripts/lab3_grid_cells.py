@@ -37,7 +37,7 @@ class aNode:
 		self.g = g 
 		self.adjacent = list()
 		self.f = 0
-		self.cameFrom = list()
+		self.cameFrom = 0
 	def addAdjacent(self, index):
 		self.adjacent.append(index)
 	def addParent(self, index): 
@@ -280,9 +280,7 @@ def evalNeighbor(nNode, current):
 				openSet.append(nNode)
 			nNode.g = calcG(current.g, nNode.g)
 			nNode.f = nNode.g + nNode.huer 
-			cameFromList = (current.cameFrom)
-			cameFromList.append(current.index)
-			G[nNode.index].addParent(cameFromList)
+			G[nNode.index].cameFrom = current.index
 	#is in the closed set
 	else:
 		lowestInQ(openSet)
@@ -297,7 +295,18 @@ def lowestInQ(nodeSet):
 	mapIndex = nodeSet[a].index
 	return mapIndex
 	
-
+def reconPath(current, start): 
+	total_path = list()
+	total_path.append(current.index)
+	i = False 		
+	while not i:
+		if current.cameFrom is not start.index: 			
+			current = G[current.cameFrom]
+			total_path.append(current.cameFrom)		
+			
+	else: 
+		i = True 
+	return total_path
 def aStar():
 	
 	global G
@@ -330,7 +339,9 @@ def aStar():
 			current = G[i]
 			#print G[i].cameFrom
 			if (current.index == goalIndex): 
-				return current.cameFrom
+				print reconPath(current, G[startIndex])
+								
+				return reconPath(current, startIndex)
 				pass
 			openSet.remove(current)
 			closedSet.append(current)		
