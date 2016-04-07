@@ -544,7 +544,6 @@ def run():
         publishCells(mapData) #publishing map data every 2 seconds
         if startRead and goalRead:
             path = aStar()
-            path2 = copy.deepcopy(path)
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
