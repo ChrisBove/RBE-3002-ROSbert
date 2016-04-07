@@ -11,9 +11,6 @@ Panels:
         - /goal_pose1
         - /Path1
         - /Way Points1
-        - /Map Check1
-        - /Pose1
-        - /GridCells1
       Splitter Ratio: 0.5
     Tree Height: 1175
   - Class: rviz/Selection
@@ -126,11 +123,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        mount_asus_xtion_pro_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         plate_bottom_link:
           Alpha: 1
           Show Axes: false
@@ -297,10 +289,10 @@ Visualization Manager:
     - Alpha: 1
       Class: rviz/GridCells
       Color: 25; 255; 0
-      Enabled: true
+      Enabled: false
       Name: Map Check
       Topic: /map_check
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.1
@@ -346,19 +338,19 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 21.3826
+      Distance: 24.946
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 5.1787
-        Y: 5.08594
-        Z: -0.958073
+        X: 3.73655
+        Y: 2.06136
+        Z: -2.07212
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.2448
+      Pitch: 1.2398
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
       Yaw: 4.0854
@@ -380,4 +372,4 @@ Window Geometry:
     collapsed: true
   Width: 1047
   X: 1102
-  Y: 14
+  Y: 24

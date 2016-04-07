@@ -76,6 +76,8 @@ def readStart(_startPos):
     startIndex = getIndexFromWorldPoint(startPosX, startPosY)
     print "Printing start pose"
     print startPos.pose.pose
+    point = getWorldPointFromIndex(startIndex)
+    print "Calculated world position: %f, %f Index: %i" % (point.x, point.y, startIndex)
 
 def readGoal(goal):
     global goalRead
@@ -105,18 +107,19 @@ def getIndexFromPoint(x,y):
 #returns in meters the point of the current index
 def getWorldPointFromIndex(index):
 	point=Point()
+	#print "GetX: %i" % getX(index)
 	point.x=(getX(index)*resolution)+offsetX + (1.5 * resolution)
-	point.y=(getY(index)*resolution)+offsetY - (.5 * resolution)
+	point.y=(getY(index)*resolution)+offsetY + (.5 * resolution)
 	point.z=0
 	return point
 
 # returns the index number given a point in the world
 def getIndexFromWorldPoint(x,y):
 	#calculate the index coordinates
-	indexX = (x-offsetX - (1.5*resolution))/resolution
-	indexY = (y-offsetY + (.5*resolution))/resolution
+	indexX = int(((x-offsetX) - (1.5*resolution))/resolution)
+	indexY = int(((y-offsetY) - (.5*resolution))/resolution)
 	
-	index = int (((indexY-1)*width) + indexX) 
+	index = int (((indexY)*width) + indexX) 
 	
 	print index	
 	return index
@@ -443,7 +446,18 @@ def publishTraversal(grid):
         cells.cells.append(point)
     pub_traverse.publish(cells)  
 
+def pubGoal(grid):
+	global goal_pub
+	
+	cells = GridCells()
+	cells.header.frame_id = 'map'
+	cells.cell_width = resolution
+	cells.cell_height = resolution
 
+	for node in grid:
+		point = getWorldPointFromIndex(node.index)
+		cells.cells.append(point)
+	goal_pub.publish(cells)
 
 
 #Main handler of the project
@@ -458,6 +472,7 @@ def run():
     global pub_traverse
     global frontier
     frontier = list()
+    global goal_pub
 
 
 
@@ -471,6 +486,7 @@ def run():
     pub_traverse = rospy.Publisher('map_cells/traversal', GridCells, queue_size=1)
     pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
+    goal_pub = rospy.Publisher('goal_point', PoseStamped, queue_size=1)
     # wait a second for publisher, subscribers, and TF
     rospy.sleep(1)
 
