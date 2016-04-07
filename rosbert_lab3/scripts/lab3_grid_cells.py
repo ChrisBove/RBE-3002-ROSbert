@@ -292,10 +292,14 @@ def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzag
 		currNode = path[index]
 		currNodeX = getPointFromIndex(currNode.index).x
 		currNodeY = getPointFromIndex(currNode.index).y
-
-		averagePoint.x = (currNodeX+nextNodeX)/2)
-		averagePoint.y = (currNodeY+nextNodeY))/2)
-		averagePoint.z = atan2(currNodeY-nextNodeY, currNodeX-nextNodeX)
+		if(!returnPath):
+			averagePoint.x = (currNodeX+nextNodeX)/2)
+			averagePoint.y = (currNodeY+nextNodeY))/2)
+			averagePoint.z = atan2(currNodeY-nextNodeY, currNodeX-nextNodeX)
+		else:
+			averagePoint.x = (returnPath[i-1].x+currNodeX)/2)
+			averagePoint.y = (returnPath[i-1].y+currNodeY))/2)
+			averagePoint.z = atan2(currNodeY-returnPath[i-1].y, currNodeX-returnPath[i-1].x)
 		returnPath.append(averagePoint)
 
 	return returnPath
