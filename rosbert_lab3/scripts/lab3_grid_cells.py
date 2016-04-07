@@ -298,7 +298,6 @@ def aStar():
 	path = list()
 	global openSet
 	global closedSet
-	start = 11
 
 	global traversal
 	traversal = list()
