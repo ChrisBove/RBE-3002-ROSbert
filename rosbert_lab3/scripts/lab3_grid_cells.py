@@ -387,10 +387,6 @@ def publishTraversal(grid):
 def run():
 
     global pub
-
-    global frontier
-    frontier = list()
-
     global startRead
     global goalRead
     startRead = False
