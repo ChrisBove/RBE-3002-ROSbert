@@ -378,7 +378,7 @@ def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzag
 				averagePoint.y = (returnPath[i-1].y+currNodeY)/2
 				averagePoint.z = 0 #math.atan2(currNodeY-returnPath[i-1].y, currNodeX-returnPath[i-1].x)
 			returnPath.append(averagePoint)
-			print "Average Point in Path: X: %f Y: %f" % (averagePoint.x, averagePoint.y)
+			#print "Average Point in Path: X: %f Y: %f" % (averagePoint.x, averagePoint.y)
 	return returnPath
 
 def noFilter(path): #takes the parsed path & tries to remove unecessary zigzags 
@@ -391,14 +391,14 @@ def noFilter(path): #takes the parsed path & tries to remove unecessary zigzags
 		point.z = 0
 		
 		returnPath.append(point)
-		print "Point in Path: X: %f Y: %f" % (point.x, point.y)
+		#print "Point in Path: X: %f Y: %f" % (point.x, point.y)
 	return returnPath
 
 #publishes map to rviz using gridcells type
 
 def publishCells(grid):
 	global pub
-	print "publishing"
+	#print "publishing"
 
     # resolution and offset of the map
 	k=0
@@ -473,8 +473,26 @@ def publishPath(grid):
         point=Point()
         point = node
         cells.cells.append(point)
-	print "Point in Path: X: %f Y: %f" % (point.x, point.y)
+	#print "Point in Path: X: %f Y: %f" % (point.x, point.y)
     pub_path.publish(cells)  
+
+def publishWaypoints(grid):
+    global pubway
+    #print "publishing traversal"
+
+        # resolution and offset of the map
+    k=0
+    cells = GridCells()
+    cells.header.frame_id = 'map'
+    cells.cell_width = resolution 
+    cells.cell_height = resolution
+
+    for node in grid:
+        point=Point()
+        point = node
+        cells.cells.append(point)
+	#print "Point in Waypoint: X: %f Y: %f" % (point.x, point.y)
+    pubway.publish(cells) 
 
 def pubGoal(grid):
 	global goal_pub
@@ -501,6 +519,7 @@ def run():
     global pub_frontier
     global pub_traverse
     global pub_path
+    global pubway
     global frontier
     frontier = list()
     global goal_pub
@@ -525,11 +544,15 @@ def run():
         publishCells(mapData) #publishing map data every 2 seconds
         if startRead and goalRead:
             path = aStar()
+            path2 = copy.deepcopy(path)
             print "Going to publish path"
             publishPath(noFilter(path))
+            print "Publishing waypoints"
+            publishWaypoints(smoothPath(path))#publish waypoints
+            print "Finished..."
             goalRead = False
         rospy.sleep(2)  
-        print("Complete")
+        #print("Complete")
     
 
 
