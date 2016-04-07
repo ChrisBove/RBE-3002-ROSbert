@@ -223,9 +223,9 @@ def linkMap():
 			myPoint = pointLeft(currentPoint)
 			#print "My Point X: %i Y: %i  calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
 			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
-	for i in range(0, height*width):
-		print "I is %i" % i
-		print G[i].adjacent
+	#for i in range(0, height*width):
+		#print "I is %i" % i
+		#print G[i].adjacent
 
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
@@ -263,6 +263,9 @@ def adjCellCheck(current):
 		if(currCell.val != 100): 
 			evalNeighbor(currCell, current) 
 		traversal.append(G[index])
+		if index == goalIndex:
+			print "We found the goalllll!!!"
+			break
 	publishTraversal(traversal)
 						
 
@@ -424,7 +427,7 @@ def publishFrontier(grid):
 
 def publishTraversal(grid):
     global pub_traverse
-    print "publishing traversal"
+    #print "publishing traversal"
 
         # resolution and offset of the map
     k=0
