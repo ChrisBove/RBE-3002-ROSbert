@@ -257,14 +257,14 @@ def calcG(currentG, neighborG):
 	
 def adjCellCheck(current):
 	global adjList
-	global frontier
+	global traversal
 	adjList =  current.adjacent ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
 		if(currCell.val != 100): 
 			evalNeighbor(currCell, current) 
-		frontier.append(G[index])
-	publishFrontier(frontier)
+		traversal.append(G[index])
+	publishTraversal(traversal)
 						
 
 def evalNeighbor(nNode, current): 
@@ -302,6 +302,8 @@ def aStar():
 	global closedSet
 	start = 11
 
+	global traversal
+	traversal = list()
 	global frontier
 	frontier = list()
 
@@ -417,7 +419,7 @@ def publishFrontier(grid):
 
     for node in grid:
         point=Point()
-        point = getPointFromIndex(node.index)
+        point = getWorldPointFromIndex(node.index)
         cells.cells.append(point)
     pub_frontier.publish(cells)  
 
@@ -437,7 +439,7 @@ def publishTraversal(grid):
 
     for node in grid:
         point=Point()
-        point = getPointFromIndex(node.index)
+        point = getWorldPointFromIndex(node.index)
         cells.cells.append(point)
     pub_traverse.publish(cells)  
 
@@ -453,6 +455,7 @@ def run():
     startRead = False
     goalRead = False
     global pub_frontier
+    global pub_traverse
     global frontier
     frontier = list()
 
