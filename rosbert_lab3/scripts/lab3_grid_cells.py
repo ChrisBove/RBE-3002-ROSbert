@@ -361,22 +361,23 @@ def smoothPath(path): #takes the parsed path & tries to remove unecessary zigzag
 	returnPath = list()
 	averagePoint = Point()
 	for i,node in enumerate(path):
-		nextNode = path[index+1]
-		nextNodeX = getPointFromIndex(nextNode.index).x
-		nextNodeY = getPointFromIndex(nextNode.index).y
+		if(i+1 < len(path)):
+			nextNode = path[i+1]
+			nextNodeX = getPointFromIndex(nextNode).x
+			nextNodeY = getPointFromIndex(nextNode).y
 
-		currNode = path[index]
-		currNodeX = getPointFromIndex(currNode.index).x
-		currNodeY = getPointFromIndex(currNode.index).y
-		if( not returnPath):
-			averagePoint.x = (currNodeX+nextNodeX)/2
-			averagePoint.y = (currNodeY+nextNodeY)/2
-			averagePoint.z = atan2(currNodeY-nextNodeY, currNodeX-nextNodeX)
-		else:
-			averagePoint.x = (returnPath[i-1].x+currNodeX)/2
-			averagePoint.y = (returnPath[i-1].y+currNodeY)/2
-			averagePoint.z = atan2(currNodeY-returnPath[i-1].y, currNodeX-returnPath[i-1].x)
-		returnPath.append(averagePoint)
+			currNode = path[i]
+			currNodeX = getPointFromIndex(currNode).x
+			currNodeY = getPointFromIndex(currNode).y
+			if( not returnPath):
+				averagePoint.x = (currNodeX+nextNodeX)/2
+				averagePoint.y = (currNodeY+nextNodeY)/2
+				averagePoint.z = math.atan2(currNodeY-nextNodeY, currNodeX-nextNodeX)
+			else:
+				averagePoint.x = (returnPath[i-1].x+currNodeX)/2
+				averagePoint.y = (returnPath[i-1].y+currNodeY)/2
+				averagePoint.z = math.atan2(currNodeY-returnPath[i-1].y, currNodeX-returnPath[i-1].x)
+			returnPath.append(averagePoint)
 
 	return returnPath
 
@@ -446,6 +447,23 @@ def publishTraversal(grid):
         cells.cells.append(point)
     pub_traverse.publish(cells)  
 
+def publishPath(grid):
+    global pub_path
+    #print "publishing traversal"
+
+        # resolution and offset of the map
+    k=0
+    cells = GridCells()
+    cells.header.frame_id = 'map'
+    cells.cell_width = resolution 
+    cells.cell_height = resolution
+
+    for node in grid:
+        point=Point()
+        point = node
+        cells.cells.append(point)
+    pub_path.publish(cells)  
+
 def pubGoal(grid):
 	global goal_pub
 	
@@ -470,6 +488,7 @@ def run():
     goalRead = False
     global pub_frontier
     global pub_traverse
+    global pub_path
     global frontier
     frontier = list()
     global goal_pub
@@ -480,7 +499,7 @@ def run():
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
-    pubpath = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
+    pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
     goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
     pub_traverse = rospy.Publisher('map_cells/traversal', GridCells, queue_size=1)
@@ -493,7 +512,9 @@ def run():
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         if startRead and goalRead:
-            aStar()
+            path = aStar()
+            print "Going to publish path"
+            publishPath(smoothPath(path))
             goalRead = False
         rospy.sleep(2)  
         print("Complete")
