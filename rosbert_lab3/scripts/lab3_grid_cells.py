@@ -122,11 +122,12 @@ def getIndexFromWorldPoint(x,y):
 	return index
 
 def heuristic(index): 
-	current = getPointFromIndex(index)
+	current = getWorldPointFromIndex(index)
 	# calc manhattan distance
 	dx = abs(current.x - goalX) 
 	dy = abs(current.y - goalY) 
 	h = (dx+dy)
+	#print "I is %i h is %f" % (index,h)
 	return h
 
 
@@ -250,7 +251,7 @@ def checkIsShortestPath (something):
 def calcG(currentG, neighborG):
 	if (neighborG == 0): 
 		neighborG = currentG + 1
-	return neighborG
+	return neighborG*resolution
 	
 	
 def adjCellCheck(current):
@@ -267,21 +268,23 @@ def adjCellCheck(current):
 
 def evalNeighbor(nNode, current): 
 	if(nNode not in closedSet): 
-		tentative = current.g + 1 
+		tentative = current.g + resolution 
 		if (nNode not in openSet) or (tentative < nNode.g):  
 			openSet.append(nNode)
 			nNode.g = calcG(current.g, nNode.g)
-			nNode.f = nNode.g + nNode.huer 
+			nNode.f = nNode.huer #nNode.g + nNode.huer 
 			cameFromList = (current.cameFrom)
 			cameFromList.append(current.index)
 			G[nNode.index].addParent(cameFromList)
-
+	#is in the closed set
+	else:
+		lowestInQ(openSet)
 
 #shitty sort finds lowest cost node 
 def lowestInQ(nodeSet): 
 	costList = list() 
 	for node in nodeSet:
-		 costList.append(node.huer + node.g)
+		costList.append(node.huer)#node.huer + node.g)
 
 	a = costList.index(min(costList))
 	mapIndex = nodeSet[a].index
@@ -321,6 +324,7 @@ def aStar():
 			#print G[i].cameFrom
 			if (current.index == goalIndex): 
 				return current.cameFrom
+				pass
 			openSet.remove(current)
 			closedSet.append(current)		
 			adjCellList = adjCellCheck(current)
