@@ -267,25 +267,23 @@ def aStar():
 	print openSet[0].index
 
 	while openSet:  
-		i = lowestInQ(openSet) 
-		current = G[i]
-		print G[i].cameFrom
-		if (current.index == goalIndex): 
-			return current.cameFrom
-		openSet.remove(current)
-		closedSet.append(current)		
-		adjCellList = adjCellCheck(current)
-		
- 				
+		try:
+			i = lowestInQ(openSet) 
+			current = G[i]
+			#print G[i].cameFrom
+			if (current.index == goalIndex): 
+				return current.cameFrom
+			openSet.remove(current)
+			closedSet.append(current)		
+			adjCellList = adjCellCheck(current)
+		except KeyboardInterrupt: 
+			break
+ 	
+
+	#sys.exit()
+			
 	print "No route to goal"
 			
-############################################# 
-#            print G.number_of_nodes()
-
-#    for i in range(1,height*width):
-#        if mapData[i] == 0: 
-#           G.add_node(i,weight = mapData[i])
-#            print G.number_of_nodes()
 
 
 
