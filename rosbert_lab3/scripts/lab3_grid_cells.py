@@ -137,10 +137,10 @@ def heuristic(index):
 def findConnected(node):
 
 	neighborhood = G.neighbors(node)
-	print "Printing neighborhood"
-	for node in neighborhood:
-		frontier[node] = 100
-	publishFrontier(frontier)
+	#print "Printing neighborhood"
+	#for node in neighborhood:
+		#frontier[node] = 100
+	#publishFrontier(frontier)
 	return neighborhood
 
 
@@ -328,6 +328,8 @@ def aStar():
 		try:
 			i = lowestInQ(openSet) 
 			current = G[i]
+			if current in frontier: 
+				frontier.remove(current)
 			#print G[i].cameFrom
 			if (current.index == goalIndex): 
 				return current.cameFrom
@@ -335,6 +337,11 @@ def aStar():
 			openSet.remove(current)
 			closedSet.append(current)		
 			adjCellList = adjCellCheck(current)
+			if adjCellList:
+				for node in adjCellList:
+					if node not in closedSet:
+						frontier.append(node)
+						publishFrontier(frontier)
 		except KeyboardInterrupt: 
 			break
  	
