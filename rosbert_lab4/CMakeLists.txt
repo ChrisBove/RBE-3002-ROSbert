@@ -124,6 +124,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -138,7 +139,11 @@ include_directories(
 # add_dependencies(rosbert_lab4 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
- add_executable(rosbert_lab4 src/rosbert_lab4.cpp)
+ add_executable(rosbert_lab4 src/rosbert_lab4.cpp
+  src/a_star.cpp
+  src/rosbert_map.cpp
+  src/rosbert_nav.cpp
+ )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

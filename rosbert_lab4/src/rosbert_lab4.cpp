@@ -9,6 +9,8 @@
 
 #include <sstream>
 
+#include "rosbert_lab4/a_star.hpp"
+
 int main(int argc, char **argv) {
 	ros::init(argc, argv, "talker");
 
