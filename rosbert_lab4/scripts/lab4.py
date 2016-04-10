@@ -189,41 +189,40 @@ def pointLeft(point):
 	return output
 
 #this adds the edges to the graphs
-def linkMap():	 
-	for i in range(0, height*width):
-		currentPoint = Point()
-		currentPoint.x = getX(i)
-		currentPoint.y = getY(i)
-		#print "I is %i, x is %i, y is %i" % (i, currentPoint.x, currentPoint.y)
-		# try adding north
-		if(isInMap(pointAbove(currentPoint))):	
-			myPoint = pointAbove(currentPoint)
-			#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
-			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
-		currentPoint.x = getX(i)
-		currentPoint.y = getY(i)
-		# try adding east
-		if(isInMap(pointRight(currentPoint))):
-			myPoint = pointRight(currentPoint)
-			#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
-			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
-		currentPoint.x = getX(i)
-		currentPoint.y = getY(i)
-		# try adding south
-		if(isInMap(pointBelow(currentPoint))):
-			myPoint = pointBelow(currentPoint)
-			#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
-			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
-		currentPoint.x = getX(i)
-		currentPoint.y = getY(i)
-		# try adding west
-		if(isInMap(pointLeft(currentPoint))):
-			myPoint = pointLeft(currentPoint)
-			#print "My Point X: %i Y: %i  calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
-			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
-	#for i in range(0, height*width):
-		#print "I is %i" % i
-		#print G[i].adjacent
+def findNeighbor(index):	 
+	adjList = list() 
+
+	currentPoint = Point()
+	currentPoint.x = getX(index)
+	currentPoint.y = getY(index)
+	#print "I is %i, x is %i, y is %i" % (i, currentPoint.x, currentPoint.y)
+	# try adding north
+	if(isInMap(pointAbove(currentPoint))):	
+		myPoint = pointAbove(currentPoint)
+		#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+	currentPoint.x = getX(index)
+	currentPoint.y = getY(index)
+	# try adding east
+	if(isInMap(pointRight(currentPoint))):
+		myPoint = pointRight(currentPoint)
+		#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+	currentPoint.x = getX(index)
+	currentPoint.y = getY(index)
+	# try adding south
+	if(isInMap(pointBelow(currentPoint))):
+		myPoint = pointBelow(currentPoint)
+		#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+	currentPoint.x = getX(index)
+	currentPoint.y = getY(index)
+	# try adding west
+	if(isInMap(pointLeft(currentPoint))):
+		myPoint = pointLeft(currentPoint)
+		#print "My Point X: %i Y: %i  calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+	return adjList
 
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
@@ -234,12 +233,12 @@ def initMap():
 		G.append(node) 
 		frontier.append(0)
 	print len(G)	
-	linkMap()
+	
 	
 def adjCellCheck(current):
 	global adjList
 	global traversal
-	adjList =  current.adjacent ## list of indexes of neighbor 
+	adjList =  findNeighbor(current.index) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
 		if(currCell.val != 100):   #checks if cell is reachable  
