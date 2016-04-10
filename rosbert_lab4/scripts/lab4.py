@@ -12,6 +12,9 @@ import math
 import rospy, tf, numpy, math
 import networkx as nx
 import copy
+#needed for Douglas Peucker algorithm
+import visual
+import itertools
 
 import heapq
 nx
@@ -418,6 +421,79 @@ def noFilter(path): #takes the parsed path & tries to remove unecessary zigzags
 		#print "Point in Path: X: %f Y: %f" % (point.x, point.y)
 	return returnPath
 
+def distance(point1, point2):
+	return math.sqrt(pow(point2.x-point1.x,2)+pow(point2.y-point1.y,2))
+
+#calculates the perpendicular distance between a line and a point
+# http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
+def perpendicularDistance(point, linePoint1, linePoint2):
+	#                     p         v           w
+	# Return minimum distance between line segment vw and point p
+	l2 =  pow(linePoint2 - linePoint2, 2) #length_squared(v, w) i.e. |w-v|^2 -  avoid a sqrt
+	if (l2 == 0.0): 
+		return distance(point, linePoint1);   # v == w case
+	# Consider the line extending the segment, parameterized as v + t (w - v).
+	# We find projection of point p onto the line. 
+	# It falls where t = [(p-v) . (w-v)] / |w-v|^2
+	# We clamp t from [0,1] to handle points outside the segment vw.
+	t = max(0, min(1, dot(point - linePoint1, linePoint2 - linePoint1) / l2));
+	projection = linePoint1 + t * (linePoint2 - linePoint1);  # Projection falls on the segment
+	return distance(point, projection); 
+
+#runs Douglas Peucker algorithm on passed list to reduce points of path into waypoints
+# see https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
+def DouglasPeucker(path, epsilon):
+	dmax = 0
+	index = 0
+	end = len(path)
+
+	#save first point
+	firstPoint = Point()
+	fistNode = path[0]
+	firstPoint.x = getWorldPointFromIndex(currNode).x
+	firstPoint.y = getWorldPointFromIndex(currNode).y
+	firstPoint.z = 0
+	#save last point
+	lastPoint = Point()
+	lastNode = path[end-1]
+	lastPoint.x = getWorldPointFromIndex(currNode).x
+	lastPoint.y = getWorldPointFromIndex(currNode).y
+	lastPoint.z = 0
+
+	for i in range(2, end):
+		currPoint = Point()
+		currNode = path[i]
+		currPoint.x = getWorldPointFromIndex(currNode).x
+		currPoint.y = getWorldPointFromIndex(currNode).y
+		currPoint.z = 0
+		
+		d = perpendicularDistance(currPoint, firstpoint, lastPoint)
+		
+		if (d > dmax):
+			index = i
+			dmax = d
+
+	#if max distance is greater than epsilon, simplify recursively
+	if  (dmax > epsilon):
+		#create list from 0 to index
+		#create list from index to end-1
+
+		recRes1 = DouglasPeucker(itertools.islice(path, 0 , i), epsilon)
+		recRes2 = DouglasPeucker(itertools.islice(path, i , end-1), epsilon)
+
+		#build the restul list
+		resultList = list()
+		resultList.append(itertools.islice(recRes1, 0, len(recRes1)-1))
+		resultList.append(itertools.islice(recRes2, 0, len(recRes2))
+	else:
+		resultList = list()
+		resultList.append(path, 0, end-1)
+	return resultList
+
+def getDouglasWaypoints(path)
+	epsilon = 0.5
+	return DouglasPeucker(path, epsilon)		
+
 #this picks out linear positions along the path
 def getWaypoints(path):
 	returnPath = list()
@@ -603,7 +679,7 @@ def run():
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
-            publishWaypoints(smoothPathPoints(getWaypoints(path)))#publish waypoints
+            publishWaypoints(getDouglasWaypoints(path))#publish waypoints
             print "Finished..."
             goalRead = False
         rospy.sleep(2)  
