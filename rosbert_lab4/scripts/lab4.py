@@ -151,7 +151,7 @@ def getX(index):
 #returns the y value of the index
 def getY(index):
 	adjusted = index
-	return math.floor(adjusted/width)
+	return math.floor(adjusted/width)   
 	
 #checks if the passed point is in the map
 def isInMap(point):
@@ -235,12 +235,6 @@ def initMap():
 		frontier.append(0)
 	print len(G)	
 	linkMap()
-
-def calcG(currentG, neighborG):
-	if (neighborG == 0): 
-		neighborG = currentG + resolution
-	return neighborG
-	
 	
 def adjCellCheck(current):
 	global adjList
@@ -248,9 +242,9 @@ def adjCellCheck(current):
 	adjList =  current.adjacent ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.val != 100): 
-			evalNeighbor(currCell, current) 
-		traversal.append(G[index])
+		if(currCell.val != 100):   #checks if cell is reachable  
+			evalNeighbor(currCell, current) # evaluates the neighbor 
+			traversal.append(G[index])
 		if index == goalIndex:
 			print "We found the goalllll!!!"
 			break
@@ -258,17 +252,17 @@ def adjCellCheck(current):
 						
 
 def evalNeighbor(nNode, current): 
-	if(nNode not in closedSet): 
-		tentative = current.g + resolution 
-		if (nNode not in openSet) or (tentative < nNode.g): 
-			if (nNode not in openSet):
+	if(nNode not in closedSet):  # check if neighbor node is in closedSet - it has already been traveled to
+		tentative = current.g + resolution  #checks what the potential cost to reach the node is 
+		frontier.append(nNode)   
+		publishFrontier(frontier)  # for rviz - publish node to frontier 
+		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
+			if (nNode not in openSet): # add nodes to openset 
 				openSet.append(nNode)
-			nNode.g = calcG(current.g+nNode.g, nNode.g)
-			nNode.f = nNode.g + 2*nNode.huer 
-			G[nNode.index].cameFrom = current.index
-	#is in the closed set
-	else:
-		lowestInQ(openSet)
+			nNode.g = tentative # set cost to reach node 
+			nNode.f = nNode.g + 2*nNode.huer # calc fScore 
+			G[nNode.index].cameFrom = current.index  #set parent node - node traveled from to reach current node
+	
 
 #shitty sort finds lowest cost node 
 def lowestInQ(nodeSet): 
@@ -314,27 +308,20 @@ def aStar():
 	print len(openSet)
 	#print openSet[0].index
 
-	while openSet:  
+	while openSet:  # true when openSet (the frontier) is not empty, if open set is empty, that means no path can be found  
 
-		try:
-			i = lowestInQ(openSet) 
-			current = G[i]
-			if current in frontier: 
+		try:  # exception handler so that you can cntrl^c the program  
+			i = lowestInQ(openSet)     #find the node index/identifier of node in openSet with lowest travel cost 
+			current = G[i]            
+			if current in frontier:    # this is for graphical representation in rviz 
 				frontier.remove(current)
 			#print G[i].cameFrom
-			if (current.index == goalIndex): 
-				print reconPath(current, G[startIndex])
-								
+			if (current.index == goalIndex):         # found the destination 
 				return reconPath(current, startIndex)
-				pass
-			openSet.remove(current)
-			closedSet.append(current)		
-			adjCellList = adjCellCheck(current)
-			if adjCellList:
-				for node in adjCellList:
-					if node not in closedSet:
-						frontier.append(node)
-						publishFrontier(frontier)
+				pass 
+			openSet.remove(current)                  #take node out of openset, the node is being explored - it's no longer part of frontier 
+			closedSet.append(current)		 # add current node to closedSet (list of visited nodes) 
+			adjCellList = adjCellCheck(current)      # look at neihboring nodes and add them to openset 
 		except KeyboardInterrupt: 
 			break
  	
