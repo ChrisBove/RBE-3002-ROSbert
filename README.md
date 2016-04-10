@@ -36,3 +36,11 @@ catkin_make
 . ~/.bashrc
 
 ```
+
+##Aliases
+```
+echo source ~/catkin_ws/devel/setup.bash >> ~/.bashrc
+echo alias rbhome="'cd ~/catkin_ws/src/RBE-3002-ROSbert/'" >> ~/.bashrc
+echo alias rbmake="'catkin_make install -DCMAKE_INSTALL_PREFIX:PATH=~/catkin_ws/install -C ~/catkin_ws -DCMAKE_BUILD_TYPE=Release'" >> ~/.bashrc
+echo alias rbeclipse="'catkin_make --force-cmake -G\"Eclipse CDT4 - Unix Makefiles\" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_ECLIPSE_MAKE_ARGUMENTS=-j8 -C ~/catkin_ws'" >> ~/.bashrc
+```
