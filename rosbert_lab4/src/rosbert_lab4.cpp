@@ -16,9 +16,9 @@
 int main(int argc, char **argv) {
 	ros::init(argc, argv, "lab4");
 
-	RosbertMap map;
-	RosbertNav nav;
-	AStar aStar;
+	RosbertMap map();
+	RosbertNav nav();
+	AStar aStar();
 
 	ros::NodeHandle n;
 
