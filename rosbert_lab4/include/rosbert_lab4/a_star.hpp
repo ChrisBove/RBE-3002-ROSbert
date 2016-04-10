@@ -8,7 +8,13 @@
 #ifndef A_STAR_HPP
 #define A_STAR_HPP
 
+class AStar
+{
+public:
 
+private:
+
+};
 
 
 

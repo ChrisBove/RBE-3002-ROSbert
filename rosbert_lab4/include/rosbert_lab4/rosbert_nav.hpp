@@ -8,7 +8,13 @@
 #ifndef ROSBERT_NAV_HPP
 #define ROSBERT_NAV_HPP
 
+class RosbertNav
+{
+public:
 
+private:
+
+};
 
 
 

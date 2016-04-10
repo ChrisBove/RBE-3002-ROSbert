@@ -8,7 +8,13 @@
 #ifndef ROSBERT_MAP_HPP
 #define ROSBERT_MAP_HPP
 
+class RosbertMap
+{
+public:
 
+private:
+
+};
 
 
 
