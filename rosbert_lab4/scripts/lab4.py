@@ -465,8 +465,6 @@ def publishCells(grid):
 
 def publishFrontier(grid):
     global pub_frontier
-    print "publishing frontier"
-
         # resolution and offset of the map
     k=0
     cells = GridCells()
