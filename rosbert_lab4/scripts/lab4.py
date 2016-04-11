@@ -7,9 +7,10 @@ from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianc
 from nav_msgs.msg import Odometry, OccupancyGrid
 from kobuki_msgs.msg import BumperEvent
 import tf
-import numpy
+import numpy as np
+from numpy import dot
 import math 
-import rospy, tf, numpy, math
+import rospy, tf, math
 import networkx as nx
 import copy
 #needed for Douglas Peucker algorithm
@@ -421,6 +422,40 @@ def pointadd(p1, p2):
 	result.z = p1.z + p2.z
 	return result
 
+def pointSquare(p1):
+	result = Point()
+	result.x = pow(p1.x,2)
+	result.y = pow(p1.y,2)
+	result.z = pow(p1.z,2)
+	return result
+
+#do p1/p2
+def divide(p1, p2):
+	diff = Point()
+	diff.x = p1.x / p2.x
+	diff.y = p1.y / p2.y
+	diff.z = p1.z / p2.z
+	return diff
+
+#do p1/p2
+def divideByNum(p1, num):
+	diff = Point()
+	diff.x = p1.x / num
+	diff.y = p1.y / num
+	diff.z = p1.z / num
+	return diff
+
+def dotProduct(p1, p2):
+	result = (p1.x*p2.x) + (p1.y*p2.y) + (p1.z*p2.z)
+	return result
+
+def multByScalar(floater, point):
+	result = Point()
+	result.x *= floater
+	result.y *= floater
+	result.z *= floater
+	return result
+
 def distance(point1, point2):
 	return math.sqrt(pow(point2.x-point1.x,2)+pow(point2.y-point1.y,2))
 
@@ -429,16 +464,42 @@ def distance(point1, point2):
 def perpendicularDistance(point, linePoint1, linePoint2):
 	#                     p         v           w
 	# Return minimum distance between line segment vw and point p
-	l2 =  pow(linePoint2 - linePoint2, 2) #length_squared(v, w) i.e. |w-v|^2 -  avoid a sqrt
+	l2 = pow(distance(linePoint1, linePoint2),2) # pointSquare(pointSub(linePoint2,linePoint2)) #length_squared(v, w) i.e. |w-v|^2 -  avoid a sqrt
 	if (l2 == 0.0): 
-		return distance(point, linePoint1);   # v == w case
+		return distance(point, linePoint1)   # v == w case
 	# Consider the line extending the segment, parameterized as v + t (w - v).
 	# We find projection of point p onto the line. 
 	# It falls where t = [(p-v) . (w-v)] / |w-v|^2
 	# We clamp t from [0,1] to handle points outside the segment vw.
-	t = max(0, min(1, dot(pointSub(point, linePoint1), pointSub(linePoint2, linePoint1)) / l2));
-	projection = pointadd(linePoint1, t * (pointSub(linePoint2, linePoint1)));  # Projection falls on the segment
-	return distance(point, projection); 
+	#t = max(0, min(1, dot(pointSub(point, linePoint1), divideByNum(pointSub(linePoint2, linePoint1),l2))))
+	t =dotProduct(pointSub(point, linePoint1), divideByNum(pointSub(linePoint2, linePoint1),l2))
+	projection = pointadd(linePoint1, multByScalar(t, (pointSub(linePoint2, linePoint1)))) # Projection falls on the segment
+	return distance(point, projection)
+
+def pointToArray(point):
+	return np.array([point.x,point.y])
+
+# modified from https://github.com/fhirschmann/rdp
+def pldist(point, lpoint1, lpoint2):
+    #      x0    x1  x2
+    """
+    Calculates the distance from the point ``x0`` to the line given
+    by the points ``x1`` and ``x2``.
+    :param x0: a point
+    :type x0: a 2x1 numpy array
+    :param x1: a point of the line
+    :type x1: 2x1 numpy array
+    :param x2: another point of the line
+    :type x2: 2x1 numpy array
+    """
+    x0 = pointToArray(point)
+    x1 = pointToArray(lpoint1)
+    x2 = pointToArray(lpoint2)
+    if x1[0] == x2[0]:
+        return np.abs(x0[0] - x1[0])
+
+    return np.divide(np.linalg.norm(np.linalg.det([x2 - x1, x1 - x0])),
+                     np.linalg.norm(x2 - x1)) 
 
 #runs Douglas Peucker algorithm on passed list to reduce points of path into waypoints
 # see https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
@@ -459,7 +520,7 @@ def DouglasPeucker(path, epsilon):
 	lastPoint.x = getWorldPointFromIndex(lastNode).x
 	lastPoint.y = getWorldPointFromIndex(lastNode).y
 	lastPoint.z = 0
-
+	print "Dmax %f" % dmax
 	for i in range(2, end):
 		currPoint = Point()
 		currNode = path[i]
@@ -467,27 +528,48 @@ def DouglasPeucker(path, epsilon):
 		currPoint.y = getWorldPointFromIndex(currNode).y
 		currPoint.z = 0
 		
+		#d = pldist(currPoint, firstPoint, lastPoint)
 		d = perpendicularDistance(currPoint, firstPoint, lastPoint)
-		
+		print d
 		if (d > dmax):
 			index = i
 			dmax = d
-
+	print "Dmax now: %f" % dmax
 	#if max distance is greater than epsilon, simplify recursively
 	if  (dmax > epsilon):
 		#create list from 0 to index
 		#create list from index to end-1
 
-		recRes1 = DouglasPeucker(itertools.islice(path, 0 , i), epsilon)
-		recRes2 = DouglasPeucker(itertools.islice(path, i , end-1), epsilon)
+		print "Path length: %i Index to chop: %i" % (end, index)
+
+		firstChunk = list()
+		for thing in itertools.islice(path, 0 , index):
+			firstChunk.append(thing)
+		recRes1 = list()
+		recRes1 = DouglasPeucker(firstChunk, epsilon)
+		print "Length of chopped R1 to %i index: %i" % (index, len(recRes1))
+
+		secondChunk = list()
+		for item in itertools.islice(path, index, end-1):
+			secondChunk.append(item)
+		recRes2 = list()
+		recRes2 = DouglasPeucker(secondChunk, epsilon)
 
 		#build the restul list
+		res1 = list()
+		for item in itertools.islice(recRes1, 0, len(recRes1)-1):
+			res1.append(item)
+		res2 = list()
+		for item in itertools.islice(recRes2, 0, len(recRes2)):
+			res2.append(item)
+
 		resultList = list()
-		resultList.append(itertools.islice(recRes1, 0, len(recRes1)-1))
-		resultList.append(itertools.islice(recRes2, 0, len(recRes2)))
+		resultList.extend(res1)
+		resultList.extend(res2)
 	else:
 		resultList = list()
-		resultList.append(path, 0, end-1)
+		for thing in itertools.islice(path, 0, end-1):
+			resultList.append(thing)
 	return resultList
 
 def getDouglasWaypoints(path):
@@ -677,7 +759,7 @@ def run():
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
-            publishWaypoints(getDouglasWaypoints(path))#publish waypoints
+            publishWaypoints(noFilter(getDouglasWaypoints(path)))#publish waypoints
             print "Finished..."
             goalRead = False
         rospy.sleep(2)  
