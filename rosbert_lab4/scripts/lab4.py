@@ -534,7 +534,7 @@ def publishCells(grid):
             #print k # used for debugging
 			if (grid[k] == 100):
 				point=Point()
-				point.x=(j*resolution)+offsetX + (.5 * resolution) # added secondary offset 
+				point.x=(j*resolution)+offsetX + (1.5 * resolution) # added secondary offset 
 				point.y=(i*resolution)+offsetY - (.5 * resolution) # added secondary offset ... Magic ?
 				point.z=0
 				cells.cells.append(point)
