@@ -6,7 +6,7 @@
 
 import rospy, tf, numpy, math
 from kobuki_msgs.msg import BumperEvent
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist, Pose
 from nav_msgs.msg import Odometry, OccupancyGrid
 from geometry_msgs.msg import PoseStamped
@@ -27,6 +27,9 @@ def publishTwist(lin_Vel, ang_Vel):
 
 def navToPose(goal):
     """Drive to a goal subscribed to from /move_base_simple/goal"""
+    status = Bool()
+    status = False
+    status_pub.publish(status)
     #compute angle required to make straight-line move to desired pose
     global xPosition
     global yPosition
@@ -64,6 +67,8 @@ def navToPose(goal):
     print "spin!" #spin to final angle 
     rotate(desiredT)
     print "done"
+    status = True
+    status_pub.publish(status)
 
 
 
@@ -297,6 +302,7 @@ if __name__ == '__main__':
     pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, None, queue_size=10) # Publisher for commanding robot motion
     bumper_sub = rospy.Subscriber('/mobile_base/events/bumper', BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
     goal_sub = rospy.Subscriber('/clicked_pose', PoseStamped, navToPose, queue_size=1) #callback for setting pose goal
+    status_pub = rospy.Publisher('/moves_done', Bool, None, queue_size=1) #publishes when robot is done moving
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
