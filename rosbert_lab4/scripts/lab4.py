@@ -111,7 +111,7 @@ def getIndexFromPoint(x,y):
 def getWorldPointFromIndex(index):
 	point=Point()
 	#print "GetX: %i" % getX(index)
-	point.x=(getX(index)*resolution)+offsetX + (1.5 * resolution)
+	point.x=(getX(index)*resolution)+offsetX + (.5 * resolution)
 	point.y=(getY(index)*resolution)+offsetY + (.5 * resolution)
 	point.z=0
 	return point
@@ -119,7 +119,7 @@ def getWorldPointFromIndex(index):
 # returns the index number given a point in the world
 def getIndexFromWorldPoint(x,y):
 	#calculate the index coordinates
-	indexX = int(((x-offsetX) - (1.5*resolution))/resolution)
+	indexX = int(((x-offsetX) - (.5*resolution))/resolution)
 	indexY = int(((y-offsetY) - (.5*resolution))/resolution)
 	
 	index = int (((indexY)*width) + indexX) 
@@ -534,7 +534,7 @@ def publishCells(grid):
             #print k # used for debugging
 			if (grid[k] == 100):
 				point=Point()
-				point.x=(j*resolution)+offsetX + (1.5 * resolution) # added secondary offset 
+				point.x=(j*resolution)+offsetX + (.5 * resolution) # added secondary offset 
 				point.y=(i*resolution)+offsetY - (.5 * resolution) # added secondary offset ... Magic ?
 				point.z=0
 				cells.cells.append(point)
