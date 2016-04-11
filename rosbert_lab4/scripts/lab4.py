@@ -13,7 +13,6 @@ import rospy, tf, numpy, math
 import networkx as nx
 import copy
 #needed for Douglas Peucker algorithm
-import visual
 import itertools
 
 import heapq
@@ -450,14 +449,14 @@ def DouglasPeucker(path, epsilon):
 	#save first point
 	firstPoint = Point()
 	fistNode = path[0]
-	firstPoint.x = getWorldPointFromIndex(currNode).x
-	firstPoint.y = getWorldPointFromIndex(currNode).y
+	firstPoint.x = getWorldPointFromIndex(firstNode).x
+	firstPoint.y = getWorldPointFromIndex(firstNode).y
 	firstPoint.z = 0
 	#save last point
 	lastPoint = Point()
 	lastNode = path[end-1]
-	lastPoint.x = getWorldPointFromIndex(currNode).x
-	lastPoint.y = getWorldPointFromIndex(currNode).y
+	lastPoint.x = getWorldPointFromIndex(lastNode).x
+	lastPoint.y = getWorldPointFromIndex(lastNode).y
 	lastPoint.z = 0
 
 	for i in range(2, end):
@@ -484,13 +483,13 @@ def DouglasPeucker(path, epsilon):
 		#build the restul list
 		resultList = list()
 		resultList.append(itertools.islice(recRes1, 0, len(recRes1)-1))
-		resultList.append(itertools.islice(recRes2, 0, len(recRes2))
+		resultList.append(itertools.islice(recRes2, 0, len(recRes2)))
 	else:
 		resultList = list()
 		resultList.append(path, 0, end-1)
 	return resultList
 
-def getDouglasWaypoints(path)
+def getDouglasWaypoints(path):
 	epsilon = 0.5
 	return DouglasPeucker(path, epsilon)		
 
