@@ -448,7 +448,7 @@ def DouglasPeucker(path, epsilon):
 
 	#save first point
 	firstPoint = Point()
-	fistNode = path[0]
+	firstNode = path[0]
 	firstPoint.x = getWorldPointFromIndex(firstNode).x
 	firstPoint.y = getWorldPointFromIndex(firstNode).y
 	firstPoint.z = 0
