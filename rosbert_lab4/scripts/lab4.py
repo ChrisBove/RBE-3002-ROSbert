@@ -420,6 +420,21 @@ def noFilter(path): #takes the parsed path & tries to remove unecessary zigzags
 		#print "Point in Path: X: %f Y: %f" % (point.x, point.y)
 	return returnPath
 
+#does p1 - p2
+def pointSub(p1, p2):
+	diff = Point()
+	diff.x = p1.x - p2.x
+	diff.y = p1.y - p2.y
+	diff.z = p1.z - p2.z
+	return diff
+
+def pointadd(p1, p2):
+	result = Point()
+	result.x = p1.x + p2.x
+	result.y = p1.y + p2.y
+	result.z = p1.z + p2.z
+	return result
+
 def distance(point1, point2):
 	return math.sqrt(pow(point2.x-point1.x,2)+pow(point2.y-point1.y,2))
 
@@ -435,8 +450,8 @@ def perpendicularDistance(point, linePoint1, linePoint2):
 	# We find projection of point p onto the line. 
 	# It falls where t = [(p-v) . (w-v)] / |w-v|^2
 	# We clamp t from [0,1] to handle points outside the segment vw.
-	t = max(0, min(1, dot(point - linePoint1, linePoint2 - linePoint1) / l2));
-	projection = linePoint1 + t * (linePoint2 - linePoint1);  # Projection falls on the segment
+	t = max(0, min(1, dot(pointSub(point, linePoint1), pointSub(linePoint2, linePoint1)) / l2));
+	projection = pointadd(linePoint1, t * (pointSub(linePoint2, linePoint1)));  # Projection falls on the segment
 	return distance(point, projection); 
 
 #runs Douglas Peucker algorithm on passed list to reduce points of path into waypoints
