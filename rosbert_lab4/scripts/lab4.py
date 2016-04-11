@@ -259,7 +259,7 @@ def evalNeighbor(nNode, current):
 			if (nNode not in openSet): # add nodes to openset 
 				openSet.append(nNode)
 			nNode.g = tentative # set cost to reach node 
-			nNode.f = nNode.g + 2*nNode.huer # calc fScore 
+			nNode.f = nNode.g + 1.5*nNode.huer # calc fScore 
 			G[nNode.index].cameFrom = current.index  #set parent node - node traveled from to reach current node
 	
 
