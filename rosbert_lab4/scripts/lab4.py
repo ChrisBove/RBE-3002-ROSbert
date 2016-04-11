@@ -407,77 +407,6 @@ def noFilter(path): #takes the parsed path & tries to remove unecessary zigzags
 		#print "Point in Path: X: %f Y: %f" % (point.x, point.y)
 	return returnPath
 
-#does p1 - p2
-def pointSub(p1, p2):
-	diff = Point()
-	diff.x = p1.x - p2.x
-	diff.y = p1.y - p2.y
-	diff.z = p1.z - p2.z
-	return diff
-
-def pointadd(p1, p2):
-	result = Point()
-	result.x = p1.x + p2.x
-	result.y = p1.y + p2.y
-	result.z = p1.z + p2.z
-	return result
-
-def pointSquare(p1):
-	result = Point()
-	result.x = pow(p1.x,2)
-	result.y = pow(p1.y,2)
-	result.z = pow(p1.z,2)
-	return result
-
-#do p1/p2
-def divide(p1, p2):
-	diff = Point()
-	diff.x = p1.x / p2.x
-	diff.y = p1.y / p2.y
-	diff.z = p1.z / p2.z
-	return diff
-
-#do p1/p2
-def divideByNum(p1, num):
-	diff = Point()
-	diff.x = p1.x / num
-	diff.y = p1.y / num
-	diff.z = p1.z / num
-	return diff
-
-def dotProduct(p1, p2):
-	result = (p1.x*p2.x) + (p1.y*p2.y) + (p1.z*p2.z)
-	return result
-
-def multByScalar(floater, point):
-	result = Point()
-	result.x *= floater
-	result.y *= floater
-	result.z *= floater
-	return result
-
-def distance(point1, point2):
-	return math.sqrt(pow(point2.x-point1.x,2)+pow(point2.y-point1.y,2))
-
-#calculates the perpendicular distance between a line and a point
-# http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
-def perpendicularDistance(point, linePoint1, linePoint2):
-	#                     p         v           w
-	# Return minimum distance between line segment vw and point p
-	l2 = pow(distance(linePoint1, linePoint2),2) # pointSquare(pointSub(linePoint2,linePoint2)) #length_squared(v, w) i.e. |w-v|^2 -  avoid a sqrt
-	if (l2 == 0.0): 
-		return distance(point, linePoint1)   # v == w case
-	# Consider the line extending the segment, parameterized as v + t (w - v).
-	# We find projection of point p onto the line. 
-	# It falls where t = [(p-v) . (w-v)] / |w-v|^2
-	# We clamp t from [0,1] to handle points outside the segment vw.
-	#t = max(0, min(1, dot(pointSub(point, linePoint1), divideByNum(pointSub(linePoint2, linePoint1),l2))))
-	t =dotProduct(pointSub(point, linePoint1), divideByNum(pointSub(linePoint2, linePoint1),l2))
-	projection = pointadd(linePoint1, multByScalar(t, (pointSub(linePoint2, linePoint1)))) # Projection falls on the segment
-	return distance(point, projection)
-
-def pointToArray(point):
-	return np.array([point.x,point.y])
 
 """
 rdp
@@ -566,85 +495,6 @@ def rdp(M, epsilon=0, dist=pldist):
         return _rdp(M, epsilon, dist)
     return _rdp_nn(M, epsilon, dist)
 
-#runs Douglas Peucker algorithm on passed list to reduce points of path into waypoints
-# see https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
-def DouglasPeucker(path, epsilon):
-	dmax = 0
-	index = 0
-	end = len(path)
-
-	if(end == 0):
-		print "have an end = 0"
-		return list()
-
-	#save first point
-	firstPoint = Point()
-	firstNode = path[1]
-	firstPoint.x = getWorldPointFromIndex(firstNode).x
-	firstPoint.y = getWorldPointFromIndex(firstNode).y
-	firstPoint.z = 0
-	#save last point
-	lastPoint = Point()
-	lastNode = path[end]
-	lastPoint.x = getWorldPointFromIndex(lastNode).x
-	lastPoint.y = getWorldPointFromIndex(lastNode).y
-	lastPoint.z = 0
-	print "Dmax %f" % dmax
-	for i in range(2, end-1):
-		currPoint = Point()
-		currNode = path[i]
-		currPoint.x = getWorldPointFromIndex(currNode).x
-		currPoint.y = getWorldPointFromIndex(currNode).y
-		currPoint.z = 0
-		
-		#d = pldist(currPoint, firstPoint, lastPoint)
-		d = perpendicularDistance(currPoint, firstPoint, lastPoint)
-		print d
-		if (d > dmax):
-			index = i
-			dmax = d
-	print "Dmax now: %f" % dmax
-	#if max distance is greater than epsilon, simplify recursively
-	if  (dmax > epsilon):
-		#create list from 0 to index
-		#create list from index to end-1
-
-		print "Path length: %i Index to chop: %i" % (end, index)
-
-		firstChunk = list()
-		for thing in itertools.islice(path, 0 , index):
-			firstChunk.append(thing)
-		recRes1 = list()
-		recRes1 = DouglasPeucker(firstChunk, epsilon)
-		print "Length of chopped R1 to %i index: %i" % (index, len(recRes1))
-
-		secondChunk = list()
-		for item in itertools.islice(path, index, end-1):
-			secondChunk.append(item)
-		recRes2 = list()
-		recRes2 = DouglasPeucker(secondChunk, epsilon)
-
-		#build the restul list
-		res1 = list()
-		if (len(recRes1) > 2):
-			for item in itertools.islice(recRes1, 0, len(recRes1)-2):
-				res1.append(item)
-		else:
-			res1.extend(recRes1)
-		res2 = list()
-		if (len(recRes2) != 0):
-			for item in itertools.islice(recRes2, 0, len(recRes2)-1):
-				res2.append(item)
-
-		resultList = list()
-		resultList.extend(res1)
-		resultList.extend(res2)
-	else:
-		resultList = list()
-		for thing in itertools.islice(path, 0, end-1):
-			resultList.append(thing)
-	return resultList
-
 def getDouglasWaypoints(path):
 	#convert path to numpy 2-d array
 	a = np.zeros(shape = (len(path),2))
@@ -664,40 +514,8 @@ def getDouglasWaypoints(path):
 	return resultList
 	#return DouglasPeucker(path, epsilon)		
 
-#this picks out linear positions along the path
-def getWaypoints(path):
-	returnPath = list()
-	point = Point()
-	pointNode = path[0]
-	point.x = getWorldPointFromIndex(pointNode).x
-	point.y = getWorldPointFromIndex(pointNode).y
-	point.z = 0
-	returnPath.append(point)
-	for i,node in enumerate(path):
-		currPoint = Point()
-		currNode = path[i]
-		currPoint.x = getWorldPointFromIndex(currNode).x
-		currPoint.y = getWorldPointFromIndex(currNode).y
-		currPoint.z = 0
-
-		if (i+1 < len(path)):
-			nextPoint = Point()
-			nextNode = path[i+1]
-			nextPoint.x = getWorldPointFromIndex(nextNode).x
-			nextPoint.y = getWorldPointFromIndex(nextNode).y
-			nextPoint.z = 0
-
-			if(math.degrees(math.fabs(math.atan2(nextPoint.y-currPoint.y,nextPoint.x-nextPoint.y))) >= 10):
-				returnPath.append(currPoint)
-		else:
-			returnPath.append(currPoint)
-			pass
-
-		#print "Point in Path: X: %f Y: %f" % (point.x, point.y)
-	return returnPath
 
 #publishes map to rviz using gridcells type
-
 def publishCells(grid):
 	global pub
 	#print "publishing"
