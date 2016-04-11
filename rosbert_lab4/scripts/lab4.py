@@ -85,12 +85,23 @@ def readGoal(goal):
     global goalX
     global goalY
     global goalIndex
+    global goalTheta
+    global goalOrientation
+
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
 	
     goalIndex = getIndexFromWorldPoint(goalX,goalY)
     print "Printing goal pose"
     print goal.pose
+	
+    goalOrientation = goal.pose.orientation
+    quaternion = ( pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
+    roll, pitch, yaw = euler_from_quaternion(quaternion)
+    #convert yaw to degrees
+    pose.orientation.z = yaw
+    goalTheta = math.degrees(yaw)
+
 
 #returns in meters the point of the current index
 def getPointFromIndex(index):
@@ -660,6 +671,8 @@ def run():
     global odom_list
     #global odom_tf
     pose = Pose()
+    global goalTheta
+    global theta
 
 
     rospy.init_node('lab3')
@@ -672,6 +685,8 @@ def run():
     pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
     goal_pub = rospy.Publisher('goal_point', PoseStamped, queue_size=1)
+
+    move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
@@ -687,8 +702,37 @@ def run():
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
-            publishWaypoints(getDouglasWaypoints(path))#publish waypoints
-            print "Finished..."
+            waypoints = getDouglasWaypoints(path)
+            publishWaypoints(waypoints)#publish waypoints
+            print "Finished... beginning robot movements"
+            #for each waypoint
+            for waypt in waypoints:
+                print "doing a new waypoint"
+                # if this is the last waypoint, instead take the goal orientation
+                if (abs(goalX - waypt.x) <= resolution) and (abs(goalY - waypt.y) <= resolution):
+                    orientation = goalOrientation
+                #calculate end orientation for waypoint - perhaps the angle to the next one? or just our current heading?
+                else:
+                    orientation = pose.orientation
+                #publish goal to topic to move the robot
+                wayPose = PoseStamped()
+                wayPose.pose.position.x = waypt.x
+                wayPose.pose.position.y = waypt.y
+                wayPose.pose.position.z = 0
+                wayPose.pose.orientation = orientation
+                move_pub.publish(wayPose)
+                #wait for robot to arrive at waypoint (should be a service?)
+                errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
+                errorTheta = goalTheta - theta 
+                while (not rospy.is_shutdown()) and (errorDist >= resolution) and (math.degrees(errorTheta) >= 2):
+                    #chill out. Drink some coffee
+                    errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
+                    errorTheta = goalTheta - theta 
+                    rospy.sleep(0.5)
+                    print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
+                
+                
+
             goalRead = False
         rospy.sleep(2)  
         #print("Complete")
