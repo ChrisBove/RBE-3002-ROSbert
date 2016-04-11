@@ -466,7 +466,7 @@ def DouglasPeucker(path, epsilon):
 		currPoint.y = getWorldPointFromIndex(currNode).y
 		currPoint.z = 0
 		
-		d = perpendicularDistance(currPoint, firstpoint, lastPoint)
+		d = perpendicularDistance(currPoint, firstPoint, lastPoint)
 		
 		if (d > dmax):
 			index = i
