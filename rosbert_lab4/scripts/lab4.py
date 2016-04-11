@@ -479,9 +479,18 @@ def perpendicularDistance(point, linePoint1, linePoint2):
 def pointToArray(point):
 	return np.array([point.x,point.y])
 
-# modified from https://github.com/fhirschmann/rdp
-def pldist(point, lpoint1, lpoint2):
-    #      x0    x1  x2
+"""
+rdp
+~~~
+
+Pure Python implementation of the Ramer-Douglas-Peucker algorithm.
+
+:copyright: (c) 2014 Fabian Hirschmann <fabian@hirschmann.email>
+:license: MIT, see LICENSE.txt for more details.
+
+"""
+
+def pldist(x0, x1, x2):
     """
     Calculates the distance from the point ``x0`` to the line given
     by the points ``x1`` and ``x2``.
@@ -492,14 +501,70 @@ def pldist(point, lpoint1, lpoint2):
     :param x2: another point of the line
     :type x2: 2x1 numpy array
     """
-    x0 = pointToArray(point)
-    x1 = pointToArray(lpoint1)
-    x2 = pointToArray(lpoint2)
     if x1[0] == x2[0]:
         return np.abs(x0[0] - x1[0])
 
     return np.divide(np.linalg.norm(np.linalg.det([x2 - x1, x1 - x0])),
-                     np.linalg.norm(x2 - x1)) 
+                     np.linalg.norm(x2 - x1))
+
+def _rdp(M, epsilon, dist):
+    """
+    Simplifies a given array of points.
+
+    :param M: an array
+    :type M: Nx2 numpy array
+    :param epsilon: epsilon in the rdp algorithm
+    :type epsilon: float
+    :param dist: distance function
+    :type dist: function with signature ``f(x1, x2, x3)``
+    """
+    dmax = 0.0
+    index = -1
+
+    for i in xrange(1, M.shape[0]):
+        d = dist(M[i], M[0], M[-1])
+
+        if d > dmax:
+            index = i
+            dmax = d
+
+    if dmax > epsilon:
+        r1 = _rdp(M[:index + 1], epsilon, dist)
+        r2 = _rdp(M[index:], epsilon, dist)
+
+        return np.vstack((r1[:-1], r2))
+    else:
+        return np.vstack((M[0], M[-1]))
+
+
+def _rdp_nn(seq, epsilon, dist):
+    """
+    Simplifies a given array of points.
+
+    :param seq: a series of points
+    :type seq: sequence of 2-tuples
+    :param epsilon: epsilon in the rdp algorithm
+    :type epsilon: float
+    :param dist: distance function
+    :type dist: function with signature ``f(x1, x2, x3)``
+    """
+    return rdp(np.array(seq), epsilon, dist).tolist()
+
+
+def rdp(M, epsilon=0, dist=pldist):
+    """
+    Simplifies a given array of points.
+
+    :param M: a series of points
+    :type M: either a Nx2 numpy array or sequence of 2-tuples
+    :param epsilon: epsilon in the rdp algorithm
+    :type epsilon: float
+    :param dist: distance function
+    :type dist: function with signature ``f(x1, x2, x3)``
+    """
+    if "numpy" in str(type(M)):
+        return _rdp(M, epsilon, dist)
+    return _rdp_nn(M, epsilon, dist)
 
 #runs Douglas Peucker algorithm on passed list to reduce points of path into waypoints
 # see https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
@@ -508,20 +573,24 @@ def DouglasPeucker(path, epsilon):
 	index = 0
 	end = len(path)
 
+	if(end == 0):
+		print "have an end = 0"
+		return list()
+
 	#save first point
 	firstPoint = Point()
-	firstNode = path[0]
+	firstNode = path[1]
 	firstPoint.x = getWorldPointFromIndex(firstNode).x
 	firstPoint.y = getWorldPointFromIndex(firstNode).y
 	firstPoint.z = 0
 	#save last point
 	lastPoint = Point()
-	lastNode = path[end-1]
+	lastNode = path[end]
 	lastPoint.x = getWorldPointFromIndex(lastNode).x
 	lastPoint.y = getWorldPointFromIndex(lastNode).y
 	lastPoint.z = 0
 	print "Dmax %f" % dmax
-	for i in range(2, end):
+	for i in range(2, end-1):
 		currPoint = Point()
 		currNode = path[i]
 		currPoint.x = getWorldPointFromIndex(currNode).x
@@ -557,11 +626,15 @@ def DouglasPeucker(path, epsilon):
 
 		#build the restul list
 		res1 = list()
-		for item in itertools.islice(recRes1, 0, len(recRes1)-1):
-			res1.append(item)
+		if (len(recRes1) > 2):
+			for item in itertools.islice(recRes1, 0, len(recRes1)-2):
+				res1.append(item)
+		else:
+			res1.extend(recRes1)
 		res2 = list()
-		for item in itertools.islice(recRes2, 0, len(recRes2)):
-			res2.append(item)
+		if (len(recRes2) != 0):
+			for item in itertools.islice(recRes2, 0, len(recRes2)-1):
+				res2.append(item)
 
 		resultList = list()
 		resultList.extend(res1)
@@ -573,8 +646,23 @@ def DouglasPeucker(path, epsilon):
 	return resultList
 
 def getDouglasWaypoints(path):
-	epsilon = 0.5
-	return DouglasPeucker(path, epsilon)		
+	#convert path to numpy 2-d array
+	a = np.zeros(shape = (len(path),2))
+	for i,index in enumerate(path):
+		point = Point()
+		point = getWorldPointFromIndex(path[i])
+		a[i] = [point.x, point.y]
+	result = rdp(a,epsilon=resolution*2)
+	#turn numpy 2-d array back into some form of path (list of points)
+	resultList = list()
+	for x in range(result.size/2):
+		point = Point()
+		point.x = result[x,0]
+		point.y = result[x,1]
+		point.z = 0
+		resultList.append(point)
+	return resultList
+	#return DouglasPeucker(path, epsilon)		
 
 #this picks out linear positions along the path
 def getWaypoints(path):
@@ -759,7 +847,7 @@ def run():
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
-            publishWaypoints(noFilter(getDouglasWaypoints(path)))#publish waypoints
+            publishWaypoints(getDouglasWaypoints(path))#publish waypoints
             print "Finished..."
             goalRead = False
         rospy.sleep(2)  
