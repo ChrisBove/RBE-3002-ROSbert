@@ -2,7 +2,7 @@
 
 import rospy
 from nav_msgs.msg import GridCells
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry, OccupancyGrid
 from kobuki_msgs.msg import BumperEvent
@@ -651,6 +651,10 @@ def tCallback(event):
     pose.orientation.z = yaw
     theta = math.degrees(yaw)
 
+def statusCallback(status):
+    global moveDone
+    moveDone = status
+
 #Main handler of the project
 def run():
 
@@ -674,6 +678,9 @@ def run():
     global goalTheta
     global theta
 
+    global moveDone
+    moveDone = Bool()
+
 
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
@@ -687,6 +694,7 @@ def run():
     goal_pub = rospy.Publisher('goal_point', PoseStamped, queue_size=1)
 
     move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
+    move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
@@ -698,6 +706,7 @@ def run():
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
         if goalRead:
+            moveDone = False
             path = aStar()
             print "Going to publish path"
             publishPath(noFilter(path))
@@ -707,7 +716,8 @@ def run():
             print "Finished... beginning robot movements"
             #for each waypoint
             for waypt in waypoints:
-                print "doing a new waypoint"
+                print "doing a new waypoint:"
+                print waypt
                 # if this is the last waypoint, instead take the goal orientation
                 if (abs(goalX - waypt.x) <= resolution) and (abs(goalY - waypt.y) <= resolution):
                     orientation = goalOrientation
@@ -724,13 +734,15 @@ def run():
                 #wait for robot to arrive at waypoint (should be a service?)
                 errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
                 errorTheta = goalTheta - theta 
-                while (not rospy.is_shutdown()) and (errorDist >= resolution) and (math.degrees(errorTheta) >= 2):
+                print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
+
+                while (not rospy.is_shutdown()) and not moveDone :
                     #chill out. Drink some coffee
                     errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
                     errorTheta = goalTheta - theta 
                     rospy.sleep(0.5)
-                    print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
-                
+                    #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
+                moveDone = False
                 
 
             goalRead = False
