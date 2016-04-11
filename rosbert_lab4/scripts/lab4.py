@@ -10,14 +10,11 @@ import tf
 import numpy as np
 from numpy import dot
 import math 
-import rospy, tf, math
-import networkx as nx
 import copy
-#needed for Douglas Peucker algorithm
-import itertools
+from tf.transformations import euler_from_quaternion
+
 
 import heapq
-nx
 
 ## implementation from Python Cookbook
 class PriorityQueue:
@@ -70,7 +67,7 @@ def readStart(_startPos):
     global startPosX
     global startPosY
     global startPos
-    global startIndex
+    #global startIndex # don't make this global - we recalculate from robot pose now
 	
     startPos = _startPos
     startPosX = startPos.pose.pose.position.x
@@ -302,6 +299,7 @@ def aStar():
 	frontier = list()
 
 	openSet = list()
+	startIndex = getIndexFromWorldPoint(pose.position.x, pose.position.y)
 	openSet.append(G[startIndex])        #Add first node to openSet # set priority to distance
 	closedSet = list()		   #everything that has been examined
 	
@@ -625,6 +623,22 @@ def pubGoal(grid):
 		cells.cells.append(point)
 	goal_pub.publish(cells)
 
+#keeps track of current location and orientation
+def tCallback(event):
+    global pose
+    global theta
+
+    odom_list.waitForTransform('map', 'base_footprint', rospy.Time(0), rospy.Duration(1.0))
+    (position, orientation) = odom_list.lookupTransform('map','base_footprint', rospy.Time(0))
+    pose.position.x=position[0]
+    pose.position.y=position[1]
+
+    odomW = orientation
+    q = [odomW[0], odomW[1], odomW[2], odomW[3]]
+    roll, pitch, yaw = euler_from_quaternion(q)
+    #convert yaw to degrees
+    pose.orientation.z = yaw
+    theta = math.degrees(yaw)
 
 #Main handler of the project
 def run():
@@ -642,7 +656,10 @@ def run():
     frontier = list()
     global goal_pub
 
-
+    global pose
+    global odom_list
+    #global odom_tf
+    pose = Pose()
 
 
     rospy.init_node('lab3')
@@ -655,12 +672,17 @@ def run():
     pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
     goal_pub = rospy.Publisher('goal_point', PoseStamped, queue_size=1)
+
+    rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
+    
+    odom_list = tf.TransformListener() #listner for robot location
+
     # wait a second for publisher, subscribers, and TF
-    rospy.sleep(1)
+    rospy.sleep(2)
 
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
-        if startRead and goalRead:
+        if goalRead:
             path = aStar()
             print "Going to publish path"
             publishPath(noFilter(path))
