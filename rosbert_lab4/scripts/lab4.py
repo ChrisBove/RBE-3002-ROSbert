@@ -12,7 +12,8 @@ import math
 import rospy, tf, numpy, math
 import networkx as nx
 import copy
-	
+from heapdict import heapdict
+
 class aNode: 
 	def __init__(self, index, val, huer, g): 
 		self.index = index
@@ -156,6 +157,19 @@ def pointLeft(point):
 	output.x -= 1
 	return output
 
+def pUL(point): 
+	return pointRight(pointAbove(point))
+
+def pUR(point): 
+	return pointLeft(pointAbove(point))
+
+def pBL(point): 
+	return pointLeft(pointBelow(point))
+
+def pBR(point): 
+	return pointRight(pointBelow(point)) 
+
+
 #this adds the edges to the graphs
 def findNeighbor(index):	 
 	adjList = list() 
@@ -167,29 +181,56 @@ def findNeighbor(index):
 	# try adding north
 	if(isInMap(pointAbove(currentPoint))):	
 		myPoint = pointAbove(currentPoint)
-		#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
 		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
 	currentPoint.x = getX(index)
 	currentPoint.y = getY(index)
 	# try adding east
 	if(isInMap(pointRight(currentPoint))):
 		myPoint = pointRight(currentPoint)
-		#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
 		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
 	currentPoint.x = getX(index)
 	currentPoint.y = getY(index)
 	# try adding south
 	if(isInMap(pointBelow(currentPoint))):
 		myPoint = pointBelow(currentPoint)
-		#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
 		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
 	currentPoint.x = getX(index)
 	currentPoint.y = getY(index)
 	# try adding west
 	if(isInMap(pointLeft(currentPoint))):
 		myPoint = pointLeft(currentPoint)
-		#print "My Point X: %i Y: %i  calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
 		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+
+
+#----------------- Diagonals -------------------------------# 
+	if(isInMap(pUL(currentPoint))):	
+		myPoint = pUL(currentPoint)
+		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+
+	currentPoint.x = getX(index)
+	currentPoint.y = getY(index)
+	# try adding east
+	if(isInMap(pUR(currentPoint))):
+		myPoint = pUR(currentPoint)		
+		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+
+	currentPoint.x = getX(index)
+	currentPoint.y = getY(index)
+	# try adding south
+	if(isInMap(pBL(currentPoint))):
+		myPoint = pBL(currentPoint)		
+		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+
+	currentPoint.x = getX(index)
+	currentPoint.y = getY(index)
+	# try adding west
+	if(isInMap(pBR(currentPoint))):
+		myPoint = pBR(currentPoint)
+		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+
+
+
+
 	return adjList
 
 #takes map data and converts it into nodes, calls linkMap function
@@ -222,10 +263,11 @@ def evalNeighbor(nNode, current):
 		frontier.append(nNode)   
 		publishFrontier(frontier)  # for rviz - publish node to frontier 
 		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
-			if (nNode not in openSet): # add nodes to openset 
-				openSet.append(nNode)
 			nNode.g = tentative # set cost to reach node 
-			nNode.f = nNode.g + 1.5*nNode.huer # calc fScore 
+			nNode.f = nNode.g + 1.5*nNode.huer # calc fScore 			
+			if (nNode not in openSet): # add nodes to openset 
+				#openSet.append(nNode)
+				openSet[nNode.index] = nNode.f
 			G[nNode.index].cameFrom = current.index  #set parent node - node traveled from to reach current node
 	
 
@@ -268,8 +310,10 @@ def aStar():
 	global frontier
 	frontier = list()
 
-	openSet = list()
-	openSet.append(G[startIndex])        #Add first node to openSet # set priority to distance
+	#openSet = list()
+	openSet = heapdict() 
+	openSet[startIndex] = G[startIndex].f  
+	# openSet.append(G[startIndex])        #Add first node to openSet # set priority to distance
 	closedSet = list()		   #everything that has been examined
 	
 	print "start a*"
@@ -280,7 +324,8 @@ def aStar():
 	while openSet:  # true when openSet (the frontier) is not empty, if open set is empty, that means no path can be found  
 
 		try:  # exception handler so that you can cntrl^c the program  
-			i = lowestInQ(openSet)     #find the node index/identifier of node in openSet with lowest travel cost 
+			pop = openSet.popitem()			
+			i = pop[0]     #find the node index/identifier of node in openSet with lowest travel cost 
 			current = G[i]            
 			if current in frontier:    # this is for graphical representation in rviz 
 				frontier.remove(current)
@@ -288,7 +333,7 @@ def aStar():
 			if (current.index == goalIndex):         # found the destination 
 				return reconPath(current, startIndex)
 				#pass 
-			openSet.remove(current)                  #take node out of openset, the node is being explored - it's no longer part of frontier 
+			
 			closedSet.append(current)		 # add current node to closedSet (list of visited nodes) 
 			adjCellList = adjCellCheck(current)      # look at neihboring nodes and add them to openset 
 		except KeyboardInterrupt: 
