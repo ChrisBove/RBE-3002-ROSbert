@@ -419,7 +419,7 @@ def noFilter(path): #takes the parsed path & tries to remove unecessary zigzags
 
 """
 rdp
-~~~
+~~~ 
 
 Pure Python implementation of the Ramer-Douglas-Peucker algorithm.
 
