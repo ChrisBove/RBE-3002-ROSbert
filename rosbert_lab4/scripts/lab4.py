@@ -614,7 +614,9 @@ def publishWaypoints(grid):
     cells.cell_width = resolution 
     cells.cell_height = resolution
 
-    for node in grid:
+    for i,node in enumerate(grid):
+        if i >= len(grid)-2: #hack for stupid bug
+            break
         point=Point()
         point = node
         cells.cells.append(point)
@@ -715,11 +717,15 @@ def run():
             publishWaypoints(waypoints)#publish waypoints
             print "Finished... beginning robot movements"
             #for each waypoint
-            for waypt in waypoints:
+            for i,waypt in enumerate(waypoints):
+                #hack - skip the last waypoint. see issue tracker in github
+                if i >= len(waypoints)-2:
+                    break
                 print "doing a new waypoint:"
                 print waypt
                 # if this is the last waypoint, instead take the goal orientation
                 if (abs(goalX - waypt.x) <= resolution) and (abs(goalY - waypt.y) <= resolution):
+                    print "This waypoint is the goal"
                     orientation = goalOrientation
                 #calculate end orientation for waypoint - perhaps the angle to the next one? or just our current heading?
                 else:
@@ -744,7 +750,7 @@ def run():
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
                 
-
+            print "done robot movements"
             goalRead = False
         rospy.sleep(2)  
         #print("Complete")
