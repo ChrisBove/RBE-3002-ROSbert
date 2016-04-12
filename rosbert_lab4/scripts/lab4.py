@@ -32,7 +32,9 @@ class PriorityQueue:
 class aNode: 
 	def __init__(self, index, val, huer, g, adjacent): 
 		self.index = index
+		self.point = getWorldPointFromIndex(index)
 		self.val = val 
+		self.weight = val
 		self.huer = huer 
 		self.g = g 
 		self.adjacent = list()
@@ -175,6 +177,18 @@ def isInMap(point):
 	else:
 		return False
 
+		#checks if the passed point is in the map
+def isInMapXY(x, y):
+	#catch if point is negative
+	if(x < 0 or y < 0):
+		return False
+	# is point within 0 and width and 0 and height?
+	if( ( 0 <= x and width > x) and ( 0 <= y and height > y)):
+		return True
+	else:
+		print "not in map"
+		return False
+
 #returns index of point above this one, only works for non-first row
 def pointAbove(point):
 	output = copy.deepcopy(point)
@@ -235,6 +249,83 @@ def findNeighbor(index):
 		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
 	return adjList
 
+
+
+def expandObs(map):
+	global pub_obs
+	print "expanding nodes"
+	numberOfNodesExpanded = 0
+	robotSize = .25
+	obstacles = list()
+	map_obs = list()
+	map_obs = (node for node in G if node.val > 30)
+	for obsNode in map_obs:
+		obsx = obsNode.point.x
+		obsy = obsNode.point.y
+
+		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
+			try:
+				if(isInMapXY(obsx + distance*resolution, obsy)):
+					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
+					east = G[eastindex]
+					if(east.weight < obsNode.val):
+						east.weight = obsNode.val
+					obstacles.append(east)
+				if(isInMapXY(obsx - distance*resolution, obsy)):
+					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
+					west = G[westindex]
+					if(west.weight < obsNode.val):
+						west.weight = obsNode.val
+					obstacles.append(west)
+				if(isInMapXY(obsx,obsy + distance*resolution)):
+					northindex =  getIndexFromWorldPoint(obsx,obsy + distance*resolution)
+					north = G[northindex]
+					if(north.weight < obsNode.val):
+						north.weight = obsNode.val
+					obstacles.append(north)
+				if(isInMapXY(obsx,obsy - distance*resolution)):
+					southindex =  getIndexFromWorldPoint(obsx,obsy - distance*resolution)
+					south = G[southindex]
+					if(south.weight < obsNode.val):
+						south.weight = obsNode.val
+					obstacles.append(south)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+
+				if(isInMapXY(obsx+distance*resolution,obsy + distance*resolution)):
+					northeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy + distance*resolution)
+					northeast = G[northeastindex]
+					if(northeast.weight < obsNode.val):
+						northeast.weight = obsNode.val
+					obstacles.append(northeast)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx-distance*resolution,obsy + distance*resolution)):
+					northwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy + distance*resolution)
+					northwest = G[northwestindex]
+					if(northwest.weight < obsNode.val):
+						northwest.weight = obsNode.val
+					obstacles.append(northwest)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx+distance*resolution,obsy - distance*resolution)):
+					southeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy - distance*resolution)
+					southeast = G[southeastindex]
+					if(southeast.weight < obsNode.val):
+						southeast.weight = obsNode.val
+					obstacles.append(southeast)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx-distance*resolution,obsy - distance*resolution)):
+					southwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy - distance*resolution)
+					southwest = G[southwestindex]
+					if(southwest.weight < obsNode.val):
+						southwest.weight = obsNode.val
+					obstacles.append(southwest)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+
+			except IndexError:
+				pass
+
+	publishObstacles(obstacles)
+
+
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
 	global frontier
@@ -242,6 +333,7 @@ def initMap():
 
 		node = aNode(i,mapData[i],heuristic(i),0.0, 0)
 		G.append(node) 
+		expandObs(G)
 		frontier.append(0)
 	print len(G)	
 	
@@ -565,7 +657,22 @@ def publishFrontier(grid):
         cells.cells.append(point)
     pub_frontier.publish(cells)  
 
+def publishObstacles(grid):
+	global pub_obs
+    #print "publishing traversal"
 
+        # resolution and offset of the map
+	k=0
+	cells = GridCells()
+	cells.header.frame_id = 'map'
+	cells.cell_width = resolution 
+	cells.cell_height = resolution
+
+	for node in grid:
+		point=Point()
+		point = node.point
+		cells.cells.append(point)
+	pub_obs.publish(cells)  
 
 
 def publishTraversal(grid):
@@ -679,7 +786,7 @@ def run():
     pose = Pose()
     global goalTheta
     global theta
-
+    global pub_obs
     global moveDone
     moveDone = Bool()
 
@@ -694,6 +801,7 @@ def run():
     pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
     goal_pub = rospy.Publisher('goal_point', PoseStamped, queue_size=1)
+    pub_obs = rospy.Publisher('/map_cells/obstacles', GridCells, queue_size=1)
 
     move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
     move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
