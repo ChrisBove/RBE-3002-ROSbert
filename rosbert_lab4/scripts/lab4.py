@@ -595,7 +595,7 @@ def publishPath(grid):
     cells.header.frame_id = 'map'
     cells.cell_width = resolution 
     cells.cell_height = resolution
-
+    print grid
     for node in grid:
         point=Point()
         point = node
@@ -720,6 +720,7 @@ def run():
             for i,waypt in enumerate(waypoints):
                 #hack - skip the last waypoint. see issue tracker in github
                 if i >= len(waypoints)-2:
+                    moveDone = False
                     break
                 print "doing a new waypoint:"
                 print waypt
