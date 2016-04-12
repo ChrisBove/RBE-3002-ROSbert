@@ -259,24 +259,58 @@ def expandObs(map):
 				if(isInMapXY(obsx + distance*resolution, obsy)):
 					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
 					east = G[eastindex]
-					east.weight = obsNode.val
+					if(east.weight < obsNode.val):
+						east.weight = obsNode.val
 					obstacles.append(east)
 				if(isInMapXY(obsx - distance*resolution, obsy)):
 					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
 					west = G[westindex]
-					west.weight = obsNode.val
+					if(west.weight < obsNode.val):
+						west.weight = obsNode.val
 					obstacles.append(west)
 				if(isInMapXY(obsx,obsy + distance*resolution)):
 					northindex =  getIndexFromWorldPoint(obsx,obsy + distance*resolution)
 					north = G[northindex]
-					north.weight = obsNode.val
+					if(north.weight < obsNode.val):
+						north.weight = obsNode.val
 					obstacles.append(north)
 				if(isInMapXY(obsx,obsy - distance*resolution)):
 					southindex =  getIndexFromWorldPoint(obsx,obsy - distance*resolution)
 					south = G[southindex]
-					south.weight = obsNode.val
+					if(south.weight < obsNode.val):
+						south.weight = obsNode.val
 					obstacles.append(south)
 					numberOfNodesExpanded = numberOfNodesExpanded + 1
+
+				if(isInMapXY(obsx+distance*resolution,obsy + distance*resolution)):
+					northeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy + distance*resolution)
+					northeast = G[northeastindex]
+					if(northeast.weight < obsNode.val):
+						northeast.weight = obsNode.val
+					obstacles.append(northeast)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx-distance*resolution,obsy + distance*resolution)):
+					northwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy + distance*resolution)
+					northwest = G[northwestindex]
+					if(northwest.weight < obsNode.val):
+						northwest.weight = obsNode.val
+					obstacles.append(northwest)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx+distance*resolution,obsy - distance*resolution)):
+					southeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy - distance*resolution)
+					southeast = G[southeastindex]
+					if(southeast.weight < obsNode.val):
+						southeast.weight = obsNode.val
+					obstacles.append(southeast)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx-distance*resolution,obsy - distance*resolution)):
+					southwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy - distance*resolution)
+					southwest = G[southwestindex]
+					if(southwest.weight < obsNode.val):
+						southwest.weight = obsNode.val
+					obstacles.append(southwest)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+
 			except IndexError:
 				pass
 
