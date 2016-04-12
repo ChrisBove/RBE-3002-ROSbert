@@ -147,7 +147,7 @@ def rotate(angle):
     errorIncreases = 0
     lastError = error
 
-    while ((abs(error) >= 2) and not rospy.is_shutdown()):
+    while ((abs(error) > 2) and not rospy.is_shutdown()):
         #start the robot's motion and determine if we are at the right angle.    
         print "theta: %d  Error: %d" % (math.degrees(pose.orientation.z), error)
 
@@ -216,7 +216,7 @@ def rotateLocal(angle):
     errorIncreases = 0
     lastError = error
 
-    while ((abs(error) >= 2) and not rospy.is_shutdown()):
+    while ((abs(error) > 2) and not rospy.is_shutdown()):
         #start the robot's motion and determine if we are at the right angle.    
         print "theta: %d  Error: %d EndingAngle: %d" % (math.degrees(pose.orientation.z), error, endingAngle)
         #check if our error got worse, changed direction and we should flip the velocity
