@@ -254,7 +254,7 @@ def expandObs(map):
 		obsx = obsNode.point.x
 		obsy = obsNode.point.y
 
-		for distance in range(0, 10):# math.trunc(robotSize/resolution)):
+		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
 			try:
 				if(isInMapXY(obsx + distance*resolution, obsy)):
 					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
@@ -357,7 +357,7 @@ def evalNeighbor(nNode, current):
 			if (nNode not in openSet):
 				openSet.append(nNode)
 			nNode.g = calcG(current.g+nNode.g, nNode.g)
-			nNode.f = nNode.g + 2*nNode.huer 
+			nNode.f = nNode.g + 2*nNode.huer #A*weight manipulation
 			G[nNode.index].cameFrom = current.index
 	#is in the closed set
 	else:
@@ -814,7 +814,7 @@ def run():
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
-            publishWaypoints(smoothPathPoints(getWaypoints(path)))#publish waypoints
+            publishWaypoints(getWaypoints(path))#smoothPathPoints(getWaypoints(path)))#publish waypoints
             print "Finished..."
             goalRead = False
         rospy.sleep(2)  
