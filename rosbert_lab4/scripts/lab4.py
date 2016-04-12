@@ -534,13 +534,7 @@ def getWaypoints(path):
 			nextPoint.y = getWorldPointFromIndex(nextNode).y
 			nextPoint.z = 0
 
-<<<<<<< HEAD
-			if(math.degrees(math.fabs(math.atan2(nextPoint.y-currPoint.y,nextPoint.x-nextPoint.y))) >= 10):
-				returnPath.append(currPoint)
-		else:
-			returnPath.append(currPoint)
-			pass
-=======
+
 """
 rdp
 ~~~ 
@@ -646,7 +640,6 @@ def getDouglasWaypoints(path):
 		resultList.append(point)
 	return resultList
 	#return DouglasPeucker(path, epsilon)		
->>>>>>> origin/CB_move_it
 
 		#print "Point in Path: X: %f Y: %f" % (point.x, point.y)
 	return returnPath
