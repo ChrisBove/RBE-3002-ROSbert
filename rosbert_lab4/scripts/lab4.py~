@@ -292,7 +292,7 @@ def aStar():
 			closedSet.append(current)		 # add current node to closedSet (list of visited nodes) 
 			adjCellList = adjCellCheck(current)      # look at neihboring nodes and add them to openset 
 		except KeyboardInterrupt: 
-			pass
+			break
  	
 	print "No route to goal"
 			
