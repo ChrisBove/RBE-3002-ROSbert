@@ -2,19 +2,20 @@
 
 import rospy
 from nav_msgs.msg import GridCells
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String
 from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry, OccupancyGrid
 from kobuki_msgs.msg import BumperEvent
 import tf
-import numpy as np
-from numpy import dot
+import numpy
 import math 
+import rospy, tf, numpy, math
+import networkx as nx
 import copy
-from tf.transformations import euler_from_quaternion
-
+import time
 
 import heapq
+nx
 
 ## implementation from Python Cookbook
 class PriorityQueue:
@@ -32,7 +33,9 @@ class PriorityQueue:
 class aNode: 
 	def __init__(self, index, val, huer, g, adjacent): 
 		self.index = index
+		self.point = getWorldPointFromIndex(index)
 		self.val = val 
+		self.weight = val
 		self.huer = huer 
 		self.g = g 
 		self.adjacent = list()
@@ -67,7 +70,7 @@ def readStart(_startPos):
     global startPosX
     global startPosY
     global startPos
-    #global startIndex # don't make this global - we recalculate from robot pose now
+    global startIndex
 	
     startPos = _startPos
     startPosX = startPos.pose.pose.position.x
@@ -85,23 +88,12 @@ def readGoal(goal):
     global goalX
     global goalY
     global goalIndex
-    global goalTheta
-    global goalOrientation
-
     goalX= goal.pose.position.x
     goalY= goal.pose.position.y
 	
     goalIndex = getIndexFromWorldPoint(goalX,goalY)
     print "Printing goal pose"
     print goal.pose
-	
-    goalOrientation = goal.pose.orientation
-    quaternion = ( pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
-    roll, pitch, yaw = euler_from_quaternion(quaternion)
-    #convert yaw to degrees
-    pose.orientation.z = yaw
-    goalTheta = math.degrees(yaw)
-
 
 #returns in meters the point of the current index
 def getPointFromIndex(index):
@@ -113,13 +105,14 @@ def getPointFromIndex(index):
 
 # returns the index number given a point in the world
 def getIndexFromPoint(x,y):
+
 	return int(((y)*width) + x)
 
 #returns in meters the point of the current index
 def getWorldPointFromIndex(index):
 	point=Point()
 	#print "GetX: %i" % getX(index)
-	point.x=(getX(index)*resolution)+offsetX + (.5 * resolution)
+	point.x=(getX(index)*resolution)+offsetX + (1.5 * resolution)
 	point.y=(getY(index)*resolution)+offsetY + (.5 * resolution)
 	point.z=0
 	return point
@@ -127,7 +120,7 @@ def getWorldPointFromIndex(index):
 # returns the index number given a point in the world
 def getIndexFromWorldPoint(x,y):
 	#calculate the index coordinates
-	indexX = int(((x-offsetX) - (.5*resolution))/resolution)
+	indexX = int(((x-offsetX) - (1.5*resolution))/resolution)
 	indexY = int(((y-offsetY) - (.5*resolution))/resolution)
 	
 	index = int (((indexY)*width) + indexX) 
@@ -162,7 +155,7 @@ def getX(index):
 #returns the y value of the index
 def getY(index):
 	adjusted = index
-	return math.floor(adjusted/width)   
+	return math.floor(adjusted/width)
 	
 #checks if the passed point is in the map
 def isInMap(point):
@@ -173,6 +166,18 @@ def isInMap(point):
 	if( ( 0 <= point.x and width > point.x) and ( 0 <= point.y and height > point.y)):
 		return True
 	else:
+		return False
+
+		#checks if the passed point is in the map
+def isInMapXY(x, y):
+	#catch if point is negative
+	if(x < 0 or y < 0):
+		return False
+	# is point within 0 and width and 0 and height?
+	if( ( 0 <= x and width > x) and ( 0 <= y and height > y)):
+		return True
+	else:
+		print "not in map"
 		return False
 
 #returns index of point above this one, only works for non-first row
@@ -200,40 +205,83 @@ def pointLeft(point):
 	return output
 
 #this adds the edges to the graphs
-def findNeighbor(index):	 
-	adjList = list() 
+def linkMap():	 
+	for i in range(0, height*width):
+		currentPoint = Point()
+		currentPoint.x = getX(i)
+		currentPoint.y = getY(i)
+		#print "I is %i, x is %i, y is %i" % (i, currentPoint.x, currentPoint.y)
+		# try adding north
+		if(isInMap(pointAbove(currentPoint))):	
+			myPoint = pointAbove(currentPoint)
+			#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
+		currentPoint.x = getX(i)
+		currentPoint.y = getY(i)
+		# try adding east
+		if(isInMap(pointRight(currentPoint))):
+			myPoint = pointRight(currentPoint)
+			#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
+		currentPoint.x = getX(i)
+		currentPoint.y = getY(i)
+		# try adding south
+		if(isInMap(pointBelow(currentPoint))):
+			myPoint = pointBelow(currentPoint)
+			#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
+		currentPoint.x = getX(i)
+		currentPoint.y = getY(i)
+		# try adding west
+		if(isInMap(pointLeft(currentPoint))):
+			myPoint = pointLeft(currentPoint)
+			#print "My Point X: %i Y: %i  calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
+			G[i].addAdjacent(getIndexFromPoint(myPoint.x,myPoint.y))
+	#for i in range(0, height*width):
+		#print "I is %i" % i
+		#print G[i].adjacent
 
-	currentPoint = Point()
-	currentPoint.x = getX(index)
-	currentPoint.y = getY(index)
-	#print "I is %i, x is %i, y is %i" % (i, currentPoint.x, currentPoint.y)
-	# try adding north
-	if(isInMap(pointAbove(currentPoint))):	
-		myPoint = pointAbove(currentPoint)
-		#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
-		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
-	currentPoint.x = getX(index)
-	currentPoint.y = getY(index)
-	# try adding east
-	if(isInMap(pointRight(currentPoint))):
-		myPoint = pointRight(currentPoint)
-		#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
-		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
-	currentPoint.x = getX(index)
-	currentPoint.y = getY(index)
-	# try adding south
-	if(isInMap(pointBelow(currentPoint))):
-		myPoint = pointBelow(currentPoint)
-		#print "My Point X: %i Y: %i calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
-		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
-	currentPoint.x = getX(index)
-	currentPoint.y = getY(index)
-	# try adding west
-	if(isInMap(pointLeft(currentPoint))):
-		myPoint = pointLeft(currentPoint)
-		#print "My Point X: %i Y: %i  calc Index: %i" % (myPoint.x, myPoint.y,getIndexFromPoint(myPoint.x,myPoint.y))
-		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
-	return adjList
+
+def expandObs(map):
+	global pub_obs
+	print "expanding nodes"
+	numberOfNodesExpanded = 0
+	robotSize = .25
+	obstacles = list()
+	map_obs = list()
+	map_obs = (node for node in G if node.val > 30)
+	for obsNode in map_obs:
+		obsx = obsNode.point.x
+		obsy = obsNode.point.y
+
+		for distance in range(0, 4):# math.trunc(robotSize/resolution)):
+			try:
+				if(isInMapXY(obsx + distance*resolution, obsy)):
+					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
+					east = G[eastindex]
+					east.weight = obsNode.val
+					obstacles.append(east)
+				if(isInMapXY(obsx - distance*resolution, obsy)):
+					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
+					west = G[westindex]
+					west.weight = obsNode.val
+					obstacles.append(west)
+				if(isInMapXY(obsx,obsy + distance*resolution)):
+					northindex =  getIndexFromWorldPoint(obsx,obsy + distance*resolution)
+					north = G[northindex]
+					north.weight = obsNode.val
+					obstacles.append(north)
+				if(isInMapXY(obsx,obsy - distance*resolution)):
+					southindex =  getIndexFromWorldPoint(obsx,obsy - distance*resolution)
+					south = G[southindex]
+					south.weight = obsNode.val
+					obstacles.append(south)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+			except IndexError:
+				pass
+
+	publishObstacles(obstacles)
+
 
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
@@ -244,17 +292,24 @@ def initMap():
 		G.append(node) 
 		frontier.append(0)
 	print len(G)	
+	expandObs(G)
+	linkMap()
+
+def calcG(currentG, neighborG):
+	if (neighborG == 0): 
+		neighborG = currentG + resolution
+	return neighborG
 	
 	
 def adjCellCheck(current):
 	global adjList
 	global traversal
-	adjList =  findNeighbor(current.index) ## list of indexes of neighbor 
+	adjList =  current.adjacent ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.val != 100):   #checks if cell is reachable  
-			evalNeighbor(currCell, current) # evaluates the neighbor 
-			traversal.append(G[index])
+		if(currCell.weight != 100): 
+			evalNeighbor(currCell, current) 
+		traversal.append(G[index])
 		if index == goalIndex:
 			print "We found the goalllll!!!"
 			break
@@ -262,17 +317,17 @@ def adjCellCheck(current):
 						
 
 def evalNeighbor(nNode, current): 
-	if(nNode not in closedSet):  # check if neighbor node is in closedSet - it has already been traveled to
-		tentative = current.g + resolution  #checks what the potential cost to reach the node is 
-		frontier.append(nNode)   
-		publishFrontier(frontier)  # for rviz - publish node to frontier 
-		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
-			if (nNode not in openSet): # add nodes to openset 
+	if(nNode not in closedSet): 
+		tentative = current.g + resolution 
+		if (nNode not in openSet) or (tentative < nNode.g): 
+			if (nNode not in openSet):
 				openSet.append(nNode)
-			nNode.g = tentative # set cost to reach node 
-			nNode.f = nNode.g + 1.5*nNode.huer # calc fScore 
-			G[nNode.index].cameFrom = current.index  #set parent node - node traveled from to reach current node
-	
+			nNode.g = calcG(current.g+nNode.g, nNode.g)
+			nNode.f = nNode.g + 2*nNode.huer 
+			G[nNode.index].cameFrom = current.index
+	#is in the closed set
+	else:
+		lowestInQ(openSet)
 
 #shitty sort finds lowest cost node 
 def lowestInQ(nodeSet): 
@@ -310,7 +365,6 @@ def aStar():
 	frontier = list()
 
 	openSet = list()
-	startIndex = getIndexFromWorldPoint(pose.position.x, pose.position.y)
 	openSet.append(G[startIndex])        #Add first node to openSet # set priority to distance
 	closedSet = list()		   #everything that has been examined
 	
@@ -319,20 +373,27 @@ def aStar():
 	print len(openSet)
 	#print openSet[0].index
 
-	while openSet:  # true when openSet (the frontier) is not empty, if open set is empty, that means no path can be found  
+	while openSet:  
 
-		try:  # exception handler so that you can cntrl^c the program  
-			i = lowestInQ(openSet)     #find the node index/identifier of node in openSet with lowest travel cost 
-			current = G[i]            
-			if current in frontier:    # this is for graphical representation in rviz 
+		try:
+			i = lowestInQ(openSet) 
+			current = G[i]
+			if current in frontier: 
 				frontier.remove(current)
 			#print G[i].cameFrom
-			if (current.index == goalIndex):         # found the destination 
+			if (current.index == goalIndex): 
+				print reconPath(current, G[startIndex])
+								
 				return reconPath(current, startIndex)
-				pass 
-			openSet.remove(current)                  #take node out of openset, the node is being explored - it's no longer part of frontier 
-			closedSet.append(current)		 # add current node to closedSet (list of visited nodes) 
-			adjCellList = adjCellCheck(current)      # look at neihboring nodes and add them to openset 
+				pass
+			openSet.remove(current)
+			closedSet.append(current)		
+			adjCellList = adjCellCheck(current)
+			if adjCellList:
+				for node in adjCellList:
+					if node not in closedSet:
+						frontier.append(node)
+						publishFrontier(frontier)
 		except KeyboardInterrupt: 
 			break
  	
@@ -416,115 +477,40 @@ def noFilter(path): #takes the parsed path & tries to remove unecessary zigzags
 		#print "Point in Path: X: %f Y: %f" % (point.x, point.y)
 	return returnPath
 
+#this picks out linear positions along the path
+def getWaypoints(path):
+	returnPath = list()
+	point = Point()
+	pointNode = path[0]
+	point.x = getWorldPointFromIndex(pointNode).x
+	point.y = getWorldPointFromIndex(pointNode).y
+	point.z = 0
+	returnPath.append(point)
+	for i,node in enumerate(path):
+		currPoint = Point()
+		currNode = path[i]
+		currPoint.x = getWorldPointFromIndex(currNode).x
+		currPoint.y = getWorldPointFromIndex(currNode).y
+		currPoint.z = 0
 
-"""
-rdp
-~~~
+		if (i+1 < len(path)):
+			nextPoint = Point()
+			nextNode = path[i+1]
+			nextPoint.x = getWorldPointFromIndex(nextNode).x
+			nextPoint.y = getWorldPointFromIndex(nextNode).y
+			nextPoint.z = 0
 
-Pure Python implementation of the Ramer-Douglas-Peucker algorithm.
+			if(math.degrees(math.fabs(math.atan2(nextPoint.y-currPoint.y,nextPoint.x-nextPoint.y))) >= 10):
+				returnPath.append(currPoint)
+		else:
+			returnPath.append(currPoint)
+			pass
 
-:copyright: (c) 2014 Fabian Hirschmann <fabian@hirschmann.email>
-:license: MIT, see LICENSE.txt for more details.
-
-"""
-
-def pldist(x0, x1, x2):
-    """
-    Calculates the distance from the point ``x0`` to the line given
-    by the points ``x1`` and ``x2``.
-    :param x0: a point
-    :type x0: a 2x1 numpy array
-    :param x1: a point of the line
-    :type x1: 2x1 numpy array
-    :param x2: another point of the line
-    :type x2: 2x1 numpy array
-    """
-    if x1[0] == x2[0]:
-        return np.abs(x0[0] - x1[0])
-
-    return np.divide(np.linalg.norm(np.linalg.det([x2 - x1, x1 - x0])),
-                     np.linalg.norm(x2 - x1))
-
-def _rdp(M, epsilon, dist):
-    """
-    Simplifies a given array of points.
-
-    :param M: an array
-    :type M: Nx2 numpy array
-    :param epsilon: epsilon in the rdp algorithm
-    :type epsilon: float
-    :param dist: distance function
-    :type dist: function with signature ``f(x1, x2, x3)``
-    """
-    dmax = 0.0
-    index = -1
-
-    for i in xrange(1, M.shape[0]):
-        d = dist(M[i], M[0], M[-1])
-
-        if d > dmax:
-            index = i
-            dmax = d
-
-    if dmax > epsilon:
-        r1 = _rdp(M[:index + 1], epsilon, dist)
-        r2 = _rdp(M[index:], epsilon, dist)
-
-        return np.vstack((r1[:-1], r2))
-    else:
-        return np.vstack((M[0], M[-1]))
-
-
-def _rdp_nn(seq, epsilon, dist):
-    """
-    Simplifies a given array of points.
-
-    :param seq: a series of points
-    :type seq: sequence of 2-tuples
-    :param epsilon: epsilon in the rdp algorithm
-    :type epsilon: float
-    :param dist: distance function
-    :type dist: function with signature ``f(x1, x2, x3)``
-    """
-    return rdp(np.array(seq), epsilon, dist).tolist()
-
-
-def rdp(M, epsilon=0, dist=pldist):
-    """
-    Simplifies a given array of points.
-
-    :param M: a series of points
-    :type M: either a Nx2 numpy array or sequence of 2-tuples
-    :param epsilon: epsilon in the rdp algorithm
-    :type epsilon: float
-    :param dist: distance function
-    :type dist: function with signature ``f(x1, x2, x3)``
-    """
-    if "numpy" in str(type(M)):
-        return _rdp(M, epsilon, dist)
-    return _rdp_nn(M, epsilon, dist)
-
-def getDouglasWaypoints(path):
-	#convert path to numpy 2-d array
-	a = np.zeros(shape = (len(path),2))
-	for i,index in enumerate(path):
-		point = Point()
-		point = getWorldPointFromIndex(path[i])
-		a[i] = [point.x, point.y]
-	result = rdp(a,epsilon=resolution*2)
-	#turn numpy 2-d array back into some form of path (list of points)
-	resultList = list()
-	for x in range(result.size/2):
-		point = Point()
-		point.x = result[x,0]
-		point.y = result[x,1]
-		point.z = 0
-		resultList.append(point)
-	return resultList
-	#return DouglasPeucker(path, epsilon)		
-
+		#print "Point in Path: X: %f Y: %f" % (point.x, point.y)
+	return returnPath
 
 #publishes map to rviz using gridcells type
+
 def publishCells(grid):
 	global pub
 	#print "publishing"
@@ -552,6 +538,8 @@ def publishCells(grid):
 
 def publishFrontier(grid):
     global pub_frontier
+    print "publishing frontier"
+
         # resolution and offset of the map
     k=0
     cells = GridCells()
@@ -565,14 +553,29 @@ def publishFrontier(grid):
         cells.cells.append(point)
     pub_frontier.publish(cells)  
 
+def publishObstacles(grid):
+	global pub_obs
+    #print "publishing traversal"
 
+        # resolution and offset of the map
+	k=0
+	cells = GridCells()
+	cells.header.frame_id = 'map'
+	cells.cell_width = resolution 
+	cells.cell_height = resolution
+
+	for node in grid:
+		point=Point()
+		point = node.point
+		cells.cells.append(point)
+	pub_obs.publish(cells)  
 
 
 def publishTraversal(grid):
     global pub_traverse
     #print "publishing traversal"
 
-        # resolution and offset of the map
+	# resolution and offset of the map
     k=0
     cells = GridCells()
     cells.header.frame_id = 'map'
@@ -595,7 +598,7 @@ def publishPath(grid):
     cells.header.frame_id = 'map'
     cells.cell_width = resolution 
     cells.cell_height = resolution
-    print grid
+
     for node in grid:
         point=Point()
         point = node
@@ -614,9 +617,7 @@ def publishWaypoints(grid):
     cells.cell_width = resolution 
     cells.cell_height = resolution
 
-    for i,node in enumerate(grid):
-        if i >= len(grid)-2: #hack for stupid bug
-            break
+    for node in grid:
         point=Point()
         point = node
         cells.cells.append(point)
@@ -636,26 +637,6 @@ def pubGoal(grid):
 		cells.cells.append(point)
 	goal_pub.publish(cells)
 
-#keeps track of current location and orientation
-def tCallback(event):
-    global pose
-    global theta
-
-    odom_list.waitForTransform('map', 'base_footprint', rospy.Time(0), rospy.Duration(1.0))
-    (position, orientation) = odom_list.lookupTransform('map','base_footprint', rospy.Time(0))
-    pose.position.x=position[0]
-    pose.position.y=position[1]
-
-    odomW = orientation
-    q = [odomW[0], odomW[1], odomW[2], odomW[3]]
-    roll, pitch, yaw = euler_from_quaternion(q)
-    #convert yaw to degrees
-    pose.orientation.z = yaw
-    theta = math.degrees(yaw)
-
-def statusCallback(status):
-    global moveDone
-    moveDone = status
 
 #Main handler of the project
 def run():
@@ -672,16 +653,8 @@ def run():
     global frontier
     frontier = list()
     global goal_pub
+    global pub_obs
 
-    global pose
-    global odom_list
-    #global odom_tf
-    pose = Pose()
-    global goalTheta
-    global theta
-
-    global moveDone
-    moveDone = Bool()
 
 
     rospy.init_node('lab3')
@@ -694,64 +667,20 @@ def run():
     pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
     goal_pub = rospy.Publisher('goal_point', PoseStamped, queue_size=1)
-
-    move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
-    move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
-
-    rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
-    
-    odom_list = tf.TransformListener() #listner for robot location
+    pub_obs = rospy.Publisher('/map_cells/obstacles', GridCells, queue_size=1)
 
     # wait a second for publisher, subscribers, and TF
-    rospy.sleep(2)
+    rospy.sleep(1)
 
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
-        if goalRead:
-            moveDone = False
+        if startRead and goalRead:
             path = aStar()
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
-            waypoints = getDouglasWaypoints(path)
-            publishWaypoints(waypoints)#publish waypoints
-            print "Finished... beginning robot movements"
-            #for each waypoint
-            for i,waypt in enumerate(waypoints):
-                #hack - skip the last waypoint. see issue tracker in github
-                if i >= len(waypoints)-2:
-                    moveDone = False
-                    break
-                print "doing a new waypoint:"
-                print waypt
-                # if this is the last waypoint, instead take the goal orientation
-                if (abs(goalX - waypt.x) <= resolution) and (abs(goalY - waypt.y) <= resolution):
-                    print "This waypoint is the goal"
-                    orientation = goalOrientation
-                #calculate end orientation for waypoint - perhaps the angle to the next one? or just our current heading?
-                else:
-                    orientation = pose.orientation
-                #publish goal to topic to move the robot
-                wayPose = PoseStamped()
-                wayPose.pose.position.x = waypt.x
-                wayPose.pose.position.y = waypt.y
-                wayPose.pose.position.z = 0
-                wayPose.pose.orientation = orientation
-                move_pub.publish(wayPose)
-                #wait for robot to arrive at waypoint (should be a service?)
-                errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
-                errorTheta = goalTheta - theta 
-                print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
-
-                while (not rospy.is_shutdown()) and not moveDone :
-                    #chill out. Drink some coffee
-                    errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
-                    errorTheta = goalTheta - theta 
-                    rospy.sleep(0.5)
-                    #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
-                moveDone = False
-                
-            print "done robot movements"
+            publishWaypoints(smoothPathPoints(getWaypoints(path)))#publish waypoints
+            print "Finished..."
             goalRead = False
         rospy.sleep(2)  
         #print("Complete")
