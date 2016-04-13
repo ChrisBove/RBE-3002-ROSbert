@@ -267,7 +267,7 @@ def expandObs(map):
 	robotSize = .25
 	obstacles = list()
 	map_obs = list()
-	map_obs = (node for node in G if node.weight > 30)
+	map_obs = (node for node in G if node.val > 30)
 	for obsNode in map_obs:
 		obsx = obsNode.point.x
 		obsy = obsNode.point.y
@@ -354,7 +354,7 @@ def adjCellCheck(current):
 	adjList =  findNeighbor(current.index) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.val != 100):   #checks if cell is reachable  
+		if(currCell.weight != 100):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
 	publishTraversal(traversal)
