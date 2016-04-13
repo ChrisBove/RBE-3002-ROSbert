@@ -177,6 +177,7 @@ def findNeighbor(index):
 	currentPoint = Point()
 	currentPoint.x = getX(index)
 	currentPoint.y = getY(index)
+	"""
 	#print "I is %i, x is %i, y is %i" % (i, currentPoint.x, currentPoint.y)
 	# try adding north
 	if(isInMap(pointAbove(currentPoint))):	
@@ -200,9 +201,10 @@ def findNeighbor(index):
 	if(isInMap(pointLeft(currentPoint))):
 		myPoint = pointLeft(currentPoint)
 		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
-
+	"""
 
 #----------------- Diagonals -------------------------------# 
+	
 	if(isInMap(pUL(currentPoint))):	
 		myPoint = pUL(currentPoint)
 		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
@@ -227,8 +229,6 @@ def findNeighbor(index):
 	if(isInMap(pBR(currentPoint))):
 		myPoint = pBR(currentPoint)
 		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
-
-
 
 
 	return adjList
@@ -259,27 +259,17 @@ def adjCellCheck(current):
 
 def evalNeighbor(nNode, current): 
 	if(nNode not in closedSet):  # check if neighbor node is in closedSet - it has already been traveled to
-		tentative = current.g + resolution  #checks what the potential cost to reach the node is 
+		tentative = current.g + 1.4*resolution  #checks what the potential cost to reach the node is 
 		frontier.append(nNode)   
 		publishFrontier(frontier)  # for rviz - publish node to frontier 
 		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
 			nNode.g = tentative # set cost to reach node 
-			nNode.f = nNode.g + 1.5*nNode.huer # calc fScore 			
-			if (nNode not in openSet): # add nodes to openset 
+			nNode.f = nNode.g + 3*nNode.huer # calc fScore 			
+			#if (nNode not in openSet): # add nodes to openset 
 				#openSet.append(nNode)
-				openSet[nNode.index] = nNode.f
+			openSet[nNode.index] = nNode.f
 			G[nNode.index].cameFrom = current.index  #set parent node - node traveled from to reach current node
 	
-
-#shitty sort finds lowest cost node 
-def lowestInQ(nodeSet): 
-	costList = list() 
-	for node in nodeSet:
-		costList.append(node.f)
-
-	a = costList.index(min(costList))
-	mapIndex = nodeSet[a].index
-	return mapIndex
 	
 def reconPath(current, start): 
 	total_path = list()
@@ -295,6 +285,16 @@ def heuristic(index):
 	current = getWorldPointFromIndex(index)
 	h = math.sqrt(pow(goalX-current.x,2)+pow(goalY-current.y,2))
 	return h
+
+def finalCheck(cIndex, fIndex): 
+	cPoint = getWorldPointFromIndex(cIndex)
+	fPoint = getWorldPointFromIndex(fIndex)
+	
+	if(abs(cPoint.x - fPoint.x) < 3*resolution): 
+		if(abs(cPoint.y - fPoint.y) < 3*resolution):
+			return True
+	else: 
+		return False
 
 def aStar():
 	
@@ -330,7 +330,7 @@ def aStar():
 			if current in frontier:    # this is for graphical representation in rviz 
 				frontier.remove(current)
 			#print G[i].cameFrom
-			if (current.index == goalIndex):         # found the destination 
+			if finalCheck(current.index, goalIndex):   # (current.index == goalIndex):         # found the destination 
 				return reconPath(current, startIndex)
 				#pass 
 			
