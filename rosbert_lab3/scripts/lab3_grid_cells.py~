@@ -42,7 +42,9 @@ class aNode:
 		self.adjacent.append(index)
 	def addParent(self, index): 
 		self.cameFrom = (index)
-
+	def setH(self, newHuer): 
+		self.huer = newHuer
+ 
 # reads in global map
 def mapCallBack(data):
     global mapData
@@ -126,16 +128,21 @@ def getIndexFromWorldPoint(x,y):
 
 def heuristic(index): 
 	current = getWorldPointFromIndex(index)
-	h = math.sqrt(pow(goalX-current.x,2)+pow(goalY-current.y,2))
+	# calc manhattan distance
+	dx = abs(current.x - goalX) 
+	dy = abs(current.y - goalY) 
+	h = (dx+dy)
+	#print "I is %i h is %f" % (index,h)
 	return h
+
 
 def findConnected(node):
 
 	neighborhood = G.neighbors(node)
-	#print "Printing neighborhood"
-	#for node in neighborhood:
-		#frontier[node] = 100
-	#publishFrontier(frontier)
+	print "Printing neighborhood"
+	for node in neighborhood:
+		frontier[node] = 100
+	publishFrontier(frontier)
 	return neighborhood
 
 
@@ -226,15 +233,29 @@ def linkMap():
 		#print G[i].adjacent
 
 #takes map data and converts it into nodes, calls linkMap function
-def initMap(): 
+def initMap():
+	print "start map" 
 	global frontier
 	for i in range(0, width*height):
 
-		node = aNode(i,mapData[i],heuristic(i),0.0, 0)
+		node = aNode(i,mapData[i],0,0.0, 0)
 		G.append(node) 
 		frontier.append(0)
-	print len(G)	
 	linkMap()
+	print "finished map" 
+def calcHuer(): 
+	for i in range(0,width*height): 
+		G[i].setH(heuristic[i])
+ 
+#check's and/or compute's cell's g-score based on current g-score
+def gScore(cumulativeScore,index): 
+	#TODO
+	pass 
+
+	
+def checkIsShortestPath (something):
+	#TODO
+	pass 
 
 def calcG(currentG, neighborG):
 	if (neighborG == 0): 
@@ -263,8 +284,8 @@ def evalNeighbor(nNode, current):
 		if (nNode not in openSet) or (tentative < nNode.g): 
 			if (nNode not in openSet):
 				openSet.append(nNode)
-			nNode.g = calcG(current.g+nNode.g, nNode.g)
-			nNode.f = nNode.g + 2*nNode.huer 
+			nNode.g = calcG(current.g, nNode.g)
+			nNode.f = nNode.g + nNode.huer 
 			G[nNode.index].cameFrom = current.index
 	#is in the closed set
 	else:
@@ -274,7 +295,7 @@ def evalNeighbor(nNode, current):
 def lowestInQ(nodeSet): 
 	costList = list() 
 	for node in nodeSet:
-		costList.append(node.f)
+		costList.append(node.huer + node.g)
 
 	a = costList.index(min(costList))
 	mapIndex = nodeSet[a].index
@@ -291,10 +312,7 @@ def reconPath(current, start):
 	return total_path
 def aStar():
 	
-	global G
-	G = list()
-	initMap()  # add all nodes to grah, link all nodes
-
+	calcHuer() 
 	global path 
 	path = list()
 	global openSet
@@ -319,8 +337,6 @@ def aStar():
 		try:
 			i = lowestInQ(openSet) 
 			current = G[i]
-			if current in frontier: 
-				frontier.remove(current)
 			#print G[i].cameFrom
 			if (current.index == goalIndex): 
 				print reconPath(current, G[startIndex])
@@ -330,11 +346,6 @@ def aStar():
 			openSet.remove(current)
 			closedSet.append(current)		
 			adjCellList = adjCellCheck(current)
-			if adjCellList:
-				for node in adjCellList:
-					if node not in closedSet:
-						frontier.append(node)
-						publishFrontier(frontier)
 		except KeyboardInterrupt: 
 			break
  	
@@ -594,7 +605,10 @@ def run():
     start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
     goal_pub = rospy.Publisher('goal_point', PoseStamped, queue_size=1)
     # wait a second for publisher, subscribers, and TF
-    rospy.sleep(1)
+    rospy.sleep(1) 
+    global G
+    G = list()
+    initMap()  # add all nodes to grah, link all nodes
 
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
