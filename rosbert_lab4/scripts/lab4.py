@@ -133,7 +133,7 @@ def getIndexFromWorldPoint(x,y):
 	indexY = int(((y-offsetY) - (.5*resolution))/resolution)
 	
 	index = int (((indexY)*width) + indexX) 
-	
+	print "index from worldpoint"
 	print index	
 	return index
 
