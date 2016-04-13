@@ -133,8 +133,6 @@ def getIndexFromWorldPoint(x,y):
 	indexY = int(((y-offsetY) - (.5*resolution))/resolution)
 	
 	index = int (((indexY)*width) + indexX) 
-	print "index from worldpoint"
-	print index	
 	return index
 
 def heuristic(index): 
@@ -258,7 +256,7 @@ def expandObs(map):
 	robotSize = .25
 	obstacles = list()
 	map_obs = list()
-	map_obs = (node for node in G if node.val > 30)
+	map_obs = (node for node in G if node.weight > 30)
 	for obsNode in map_obs:
 		obsx = obsNode.point.x
 		obsy = obsNode.point.y
@@ -441,7 +439,7 @@ def aStar():
     # for each node in the path, process the nodes to generate GridCells and Path messages
 
     # Publish points
-	G.clear()
+	#G.clear()
 
 def parsePath(path):  #takes A* path, output the nodes where the path changes directions  
 	#TODO
