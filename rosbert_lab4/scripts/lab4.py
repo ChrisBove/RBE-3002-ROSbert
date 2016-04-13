@@ -333,9 +333,10 @@ def initMap():
 
 		node = aNode(i,mapData[i],heuristic(i),0.0, 0)
 		G.append(node) 
-		expandObs(G)
 		frontier.append(0)
 	print len(G)	
+	expandObs(G)
+
 	
 	
 def adjCellCheck(current):
