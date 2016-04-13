@@ -92,7 +92,7 @@ def driveStraight(speed, distance):
     while (not atTarget and not rospy.is_shutdown()):
         currentX = pose.pose.position.x
         currentY = pose.pose.position.y
-         currentDistance = math.sqrt((currentX - initialX)^2 + (currentY-initialY)^2)#Distance formula
+        currentDistance = math.sqrt((currentX - initialX)^2 + (currentY-initialY)^2)#Distance formula
         if (currentDistance >= distance):
             atTarget = True
             publishTwist(0, 0)
@@ -117,15 +117,15 @@ def rotate(angle):
     # set rotation direction
     error = angle-math.degrees(pose.orientation.z)
     #if error < 0 left if error > 0 right
-    if (error < 0)
+    if (error < 0):
     	direction = -1
-    else: if(error >= 0)
+    else if(error >= 0):
     	direction = 1
 
     while ((abs(error) >= 2) and not rospy.is_shutdown()):
         #Use this while loop to start the robots motion and determine if you are at the right angle.    
         print "theta: %d" % math.degrees(pose.orientation.z)
-        if(direction == -1)
+        if(direction == -1):
         	publishTwist(0,-1)
         else: 
         	publishTwist(0,1)
