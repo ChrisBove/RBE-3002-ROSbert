@@ -979,6 +979,8 @@ def run():
             publishPath(noFilter(path))
             print "Publishing waypoints"
             waypoints = getDouglasWaypoints(path)
+            waypoints.pop() # pop off these incorrect waypoints
+            waypoints.pop()
             publishWaypoints(waypoints)#publish waypoints
             print "Finished... beginning robot movements"
             #for each waypoint
@@ -986,8 +988,8 @@ def run():
             for i,waypt in enumerate(waypoints):
             	if somethingWentWrong:
             		break
-                #hack - skip the last waypoint. see issue tracker in github
-                if i >= len(waypoints)-2:
+                
+                if i >= len(waypoints):
                     moveDone = False
                     break
                 print "doing a new waypoint:"
