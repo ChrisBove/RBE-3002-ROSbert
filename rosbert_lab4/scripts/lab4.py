@@ -1,5 +1,9 @@
 #!/usr/bin/env python 
 
+#scp -rf /home/joshgraff/catkin_ws/src/RBE-3002-ROSbert/rosbert_lab4 hawkeye@192.168.1.101:~/Desktop/rosbert_lab4
+
+
+
 import rospy
 from nav_msgs.msg import GridCells
 from std_msgs.msg import String, Bool
@@ -47,6 +51,31 @@ def mapCallBack(data):
     offsetX = data.info.origin.position.x
     offsetY = data.info.origin.position.y
     print data.info
+
+
+# reads in global map
+def costmapCallBack(data):
+    global costmapData
+    global costwidth
+    global costheight
+    global costmapgrid
+    global costresolution
+    global costoffsetX
+    global costoffsetY
+    costmapgrid = data
+    costresolution = data.info.resolution
+    costmapData = data.data
+    
+    while expandedPath:
+    	path_obs = (node for node in expandedPath if node.val > 30)
+
+    	while path_obs:
+    		aStar()
+
+
+ 
+    print data.info
+
 
 def readStart(_startPos):
     global startRead
@@ -267,7 +296,7 @@ def expandObs(map):
 	robotSize = .25
 	obstacles = list()
 	map_obs = list()
-	map_obs = (node for node in G if node.val > 30)
+	map_obs = (node for node in G if node.val > 40)
 	for obsNode in map_obs:
 		obsx = obsNode.point.x
 		obsy = obsNode.point.y
@@ -334,6 +363,31 @@ def expandObs(map):
 
 	publishObstacles(obstacles)
 
+def expandPath(path):
+	for obsNode in path:
+		obsx = obsNode.point.x
+		obsy = obsNode.point.y
+
+		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
+			try:
+				if(isInMapXY(obsx + distance*resolution, obsy)):
+					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
+					east = G[eastindex]
+					if(east.weight < obsNode.val):
+						east.weight = obsNode.val
+					obstacles.append(east)
+				if(isInMapXY(obsx - distance*resolution, obsy)):
+					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
+					west = G[westindex]
+					if(west.weight < obsNode.val):
+						west.weight = obsNode.val
+					obstacles.append(west)
+
+			except IndexError:
+				pass
+
+	return obstacles
+
 
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
@@ -362,7 +416,7 @@ def adjCellCheck(current):
 
 def evalNeighbor(nNode, current): 
 	if(nNode not in closedSet):  # check if neighbor node is in closedSet - it has already been traveled to
-		tentative = current.g + 1.4*resolution  #checks what the potential cost to reach the node is 
+		tentative = current.g + 1.4*resolution + costmapData[nNode.index] #checks what the potential cost to reach the node is 
 		frontier.append(nNode)   
 		publishFrontier(frontier)  # for rviz - publish node to frontier 
 		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
@@ -804,10 +858,13 @@ def run():
     global pub_obs
     global moveDone
     moveDone = Bool()
+    global expandedPath
+    expandedPath = list()
 
 
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+    costmap_sub = rospy.Subscriber("/move_base/global_costmap/costmap",OccupancyGrid,costmapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
@@ -833,6 +890,7 @@ def run():
         if goalRead:
             moveDone = False
             path = aStar()
+            expandedPath = expandPath(path)
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
