@@ -65,11 +65,11 @@ def costmapCallBack(data):
     costmapgrid = data
     costresolution = data.info.resolution
     costmapData = data.data
-    costoffsetX = data.x
-    costoffsetY = data.y
+    #costoffsetX = data.x
+    #costoffsetY = data.y
 
-    for i in costmapData:
-    	G[getIndexFromWorldPoint(costoffsetX,costoffsetY)+i] = costmapData[i]
+    #for i in costmapData:
+    #	G[getIndexFromWorldPoint(costoffsetX,costoffsetY)+i] = costmapData[i]
 
 
     while expandedPath:
@@ -871,7 +871,7 @@ def run():
 
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
-    costmap_sub = rospy.Subscriber("/move_base/global_costmap/costmap_updates",OccupancyGridUpdate,costmapCallBack)
+    costmap_sub = rospy.Subscriber("/move_base/global_costmap/costmap",OccupancyGrid,costmapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
