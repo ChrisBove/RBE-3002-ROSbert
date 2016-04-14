@@ -82,6 +82,21 @@ def costmapCallBack(data):
  
     print data.info
 
+# reads in global map
+def localCostmapCallBack(data):
+    global localCostmapData
+    global localCostWidth
+    global localCostHeight
+    global localCostMapGrid
+    global localCostResolution
+    global localCostOffsetX
+    global localCostOffsetY
+    localCostmapgrid = data
+    localCostresolution = data.info.resolution
+    localCostmapData = data.data
+ 
+    print "LocalCostmap Update"
+    #print data.info
 
 def readStart(_startPos):
     global startRead
@@ -872,6 +887,7 @@ def run():
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
     costmap_sub = rospy.Subscriber("/move_base/global_costmap/costmap",OccupancyGrid,costmapCallBack)
+    localCostMap_sub = rospy.Subscriber("/move_base/local_costmap/costmap", OccupancyGrid,localCostmapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
