@@ -115,10 +115,10 @@ def rotate(angle):
     global odom_list
     global pose
     print "Rotate!"
-    if (angle > 180):
+    if (angle >= 180):
         angle = angle - 360
 
-    if (angle < -180):
+    if (angle <= -180):
         angle = angle + 360
         print "angle is to large or small"
     vel = Twist();   
@@ -171,7 +171,8 @@ def readBumper(msg):
     if (msg.state == 1):
         # What should happen when the bumper is pressed?
         print "Bumper pressed!"
-        executeTrajectory()
+        publishTwist(0,0)
+        atTarget = True
 
 
 #keeps track of current location and orientation
@@ -218,10 +219,10 @@ if __name__ == '__main__':
 
     rospy.sleep(2)
 
-    print "Starting Lab 2"
+    print "Robot Motion Started"
 
     while not rospy.is_shutdown():
         rospy.spin()
     
 
-    print "Lab 2 complete!"
+    print "Robot Motion Closed"

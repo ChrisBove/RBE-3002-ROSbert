@@ -65,18 +65,6 @@ def costmapCallBack(data):
     costmapgrid = data
     costresolution = data.info.resolution
     costmapData = data.data
-    costoffsetX = data.x
-    costoffsetY = data.y
-
-    for i in costmapData:
-    	G[getIndexFromWorldPoint(costoffsetX,costoffsetY)+i] = costmapData[i]
-
-
-    while expandedPath:
-    	path_obs = (node for node in expandedPath if node.val > 30)
-
-    	while path_obs:
-    		aStar()
 
 
  
@@ -415,7 +403,7 @@ def adjCellCheck(current):
 	adjList =  findNeighbor(current.index) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.weight != 100):   #checks if cell is reachable  
+		if(currCell.weight != 100) and (currCell.weight != -1):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
 	publishTraversal(traversal)
@@ -871,7 +859,7 @@ def run():
 
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
-    costmap_sub = rospy.Subscriber("/move_base/global_costmap/costmap_updates",OccupancyGridUpdate,costmapCallBack)
+    costmap_sub = rospy.Subscriber("/move_base/global_costmap/costmap",OccupancyGrid,costmapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
@@ -882,7 +870,7 @@ def run():
     goal_pub = rospy.Publisher('goal_point', PoseStamped, queue_size=1)
     pub_obs = rospy.Publisher('/map_cells/obstacles', GridCells, queue_size=1)
 
-    move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
+    move_pub = rospy.Publisher('/rosbert_pose', PoseStamped, None, queue_size=1)
     move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
@@ -902,12 +890,15 @@ def run():
             publishPath(noFilter(path))
             print "Publishing waypoints"
             waypoints = getDouglasWaypoints(path)
+            waypoints.pop()
+            waypoints.pop()
+            waypoints.reverse()
             publishWaypoints(waypoints)#publish waypoints
             print "Finished... beginning robot movements"
             #for each waypoint
             for i,waypt in enumerate(waypoints):
                 #hack - skip the last waypoint. see issue tracker in github
-                if i >= len(waypoints)-2:
+                if i == len(waypoints):
                     moveDone = False
                     break
                 print "doing a new waypoint:"
