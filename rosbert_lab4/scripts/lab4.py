@@ -71,15 +71,6 @@ def costmapCallBack(data):
     #for i in costmapData:
     #	G[getIndexFromWorldPoint(costoffsetX,costoffsetY)+i] = costmapData[i]
 
-
-    while expandedPath:
-    	path_obs = (node for node in expandedPath if node.val > 30)
-
-    	while path_obs:
-    		aStar()
-
-
- 
     print data.info
 
 # reads in global map
