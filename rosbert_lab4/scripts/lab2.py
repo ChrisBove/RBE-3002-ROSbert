@@ -281,6 +281,21 @@ def stopCallback(msg):
         publishTwist(0, 0) #stop!
         haltNow = True
 
+def wiggleCallback(wiggleTime):
+    if wiggleTime:
+        print "Wiggle Time!!!"
+        # rotate robot back and forth several times
+        angle = 45
+        startingAngle = math.degrees(pose.orientation.z)
+        for i in range(0, 7):
+            rotateLocal(angle)
+            rospy.sleep(1)
+            rotateLocal(-angle)
+            rospy.sleep(1)
+        rotate(startingAngle)
+        rospy.sleep(0.3)
+        status_pub.publish(True)
+
 
 #keeps track of current location and orientation
 def tCallback(event):
@@ -319,6 +334,7 @@ if __name__ == '__main__':
     goal_sub = rospy.Subscriber('/clicked_pose', PoseStamped, navToPose, queue_size=1) #callback for setting pose goal
     status_pub = rospy.Publisher('/moves_done', Bool, None, queue_size=1) #publishes when robot is done moving
     stop_sub = rospy.Subscriber('stop_move', Bool, stopCallback, queue_size=1)
+    wiggle_sub = rospy.Subscriber('wiggle_move', Bool, wiggleCallback, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
