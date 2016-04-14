@@ -415,7 +415,7 @@ def adjCellCheck(current):
 	adjList =  findNeighbor(current.index) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.weight != 100):   #checks if cell is reachable  
+		if(currCell.weight != 100) and (currCell.weight != -1):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
 	publishTraversal(traversal)
