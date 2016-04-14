@@ -969,7 +969,10 @@ def run():
             publishWaypoints(waypoints)#publish waypoints
             print "Finished... beginning robot movements"
             #for each waypoint
+            somethingWentWrong = False
             for i,waypt in enumerate(waypoints):
+            	if somethingWentWrong:
+            		break
                 #hack - skip the last waypoint. see issue tracker in github
                 if i >= len(waypoints)-2:
                     moveDone = False
@@ -1004,12 +1007,21 @@ def run():
                     errorTheta = goalTheta - theta 
 
                     # check if an obstacle popped into our view
-                    rospy.sleep(0.5)
+
+                    if(icebergAhead(math.abs(errorDist))):
+                    	print "ICE BERG AHEAD!!!! stop and replan"
+                    	betta_stop_pub.Publish(True) #send a stop command to our movement guy
+                    	somethingWentWrong = True
+                    	#wiggle back and forth to get more readings to get the global map to update
+                    	#TODO
+
+                    	break
+                    rospy.sleep(0.1)
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
-                
-            print "done robot movements"
-            goalRead = False
+            if not somethingWentWrong:    
+            	print "done robot movements"
+            	goalRead = False
         rospy.sleep(2)  
         #print("Complete")
     
