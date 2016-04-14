@@ -948,6 +948,7 @@ def run():
 
     move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
     move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
+    stop_pub = rospy.Publisher('stop_move', Bool, None, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
@@ -1010,7 +1011,7 @@ def run():
 
                     if(icebergAhead(math.abs(errorDist))):
                     	print "ICE BERG AHEAD!!!! stop and replan"
-                    	betta_stop_pub.Publish(True) #send a stop command to our movement guy
+                    	stop_pub.Publish(True) #send a stop command to our movement guy
                     	somethingWentWrong = True
                     	#wiggle back and forth to get more readings to get the global map to update
                     	#TODO
