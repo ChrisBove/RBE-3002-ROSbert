@@ -89,11 +89,56 @@ def localCostmapCallBack(data):
     print "LocalCostmap Update"
     #print data.info
 
+#returns the index of a point in the local costmap frame. make sure it is in map before sending it here
+def getIndexFromLocalCostMap(x,y):
+	return int(((y)*localCostWidth) + x)
+
+#checks if the passed point is in the local cost map
+def isInLocalCostMap(x,y):
+	#catch if point is negative
+	if(x < 0 or y < 0):
+		return False
+	# is point within 0 and width and 0 and height?
+	if( ( 0 <= x and localCostWidth > x) and ( 0 <= y and localCostWeight > y)):
+		return True
+	else:
+		return False
+
 # returns true if the local costmap thinks an obstacle is straight ahead w/in distance
 def icebergAhead(distance):
 	#grab the robot position and angle
-
 	# calculate the indices or positions of squares that will be in front of the robot
+	xpos = math.cos(math.radians(theta))*distance
+	ypos = math.sin(math.radians(theta))*distance
+	numGridThings = math.ceil(distance/resolution)
+
+	if xpos == 0:
+		xpos = 0.0001
+
+	slope = (ypos)/(xpos)
+
+	indexesToCheck = list()
+	for i in range(0,numGridThings):
+		#calculate positions from line equation
+		pointX = resolution*i
+		pointY = pointX*slope
+		#calculate index of point, if it is in the map
+		if isInLocalCostMap(pointX,pointY):
+			thisIndex = getIndexFromLocalCostMap(pointX,pointY)
+			indexesToCheck.append(thisIndex)
+			#stash index into list
+
+			incrementalX = pointX
+			incrementalY = pointY
+			#for indexes above that, add those too
+			for k in range(-5, 6):
+				incrementalY
+
+		#for indexes below that, add those
+
+		#for indexes right of that, add those
+
+		#for indexes left of that, add those
 
 	# iterate through and see if any have a cost greater than 90
 
