@@ -98,6 +98,19 @@ def localCostmapCallBack(data):
     print "LocalCostmap Update"
     #print data.info
 
+# returns true if the local costmap thinks an obstacle is straight ahead w/in distance
+def icebergAhead(distance):
+	#grab the robot position and angle
+
+	# calculate the indices or positions of squares that will be in front of the robot
+
+	# iterate through and see if any have a cost greater than 90
+
+	# if so, return ice berg ahead!!!
+
+	# if not, return false
+	return False
+
 def readStart(_startPos):
     global startRead
     startRead = True
@@ -947,10 +960,15 @@ def run():
                 errorTheta = goalTheta - theta 
                 print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
 
+                # calculate if an obstacle is in our path in the local costmap
+
+                #while we aren't done moving and we don't see an obstacle bw us and waypoint
                 while (not rospy.is_shutdown()) and not moveDone :
                     #chill out. Drink some coffee
                     errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
                     errorTheta = goalTheta - theta 
+
+                    # check if an obstacle popped into our view
                     rospy.sleep(0.5)
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
