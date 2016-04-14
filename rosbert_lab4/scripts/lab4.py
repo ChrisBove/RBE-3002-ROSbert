@@ -130,19 +130,18 @@ def icebergAhead(distance):
 
 			incrementalX = pointX
 			incrementalY = pointY
-			#for indexes above that, add those too
-			for k in range(-5, 6):
-				incrementalY
+			#expand out left right up down from each of those points along the path
+			for x in range(-5, 6): # we think the robot radius is 5*resolution
+				for y in range(-5, 6):
+					resultX = pointX + (localCostresolution*x)
+					resultY = pointY + (localCostresolution*y)
+					indexesToCheck.append(getIndexFromLocalCostMap(resultX,resultY))
 
-		#for indexes below that, add those
-
-		#for indexes right of that, add those
-
-		#for indexes left of that, add those
 
 	# iterate through and see if any have a cost greater than 90
-
-	# if so, return ice berg ahead!!!
+	for index in indexesToCheck:
+		if localCostmapData[index] >= 90:
+			return True # if so, return ice berg ahead!!!
 
 	# if not, return false
 	return False
