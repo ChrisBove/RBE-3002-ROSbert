@@ -65,7 +65,13 @@ def costmapCallBack(data):
     costmapgrid = data
     costresolution = data.info.resolution
     costmapData = data.data
-    
+    costoffsetX = data.x
+    costoffsetY = data.y
+
+    for i in costmapData:
+    	G[getIndexFromWorldPoint(costoffsetX,costoffsetY)+i] = costmapData[i]
+
+
     while expandedPath:
     	path_obs = (node for node in expandedPath if node.val > 30)
 
@@ -364,23 +370,24 @@ def expandObs(map):
 	publishObstacles(obstacles)
 
 def expandPath(path):
+	obstacles = list()
 	for obsNode in path:
-		obsx = obsNode.point.x
-		obsy = obsNode.point.y
+		obsx = G[obsNode].point.x
+		obsy = G[obsNode].point.y
 
 		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
 			try:
 				if(isInMapXY(obsx + distance*resolution, obsy)):
 					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
 					east = G[eastindex]
-					if(east.weight < obsNode.val):
-						east.weight = obsNode.val
+					if(east.weight < G[obsNode].val):
+						east.weight = G[obsNode].val
 					obstacles.append(east)
 				if(isInMapXY(obsx - distance*resolution, obsy)):
 					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
 					west = G[westindex]
-					if(west.weight < obsNode.val):
-						west.weight = obsNode.val
+					if(west.weight < G[obsNode].val):
+						west.weight = G[obsNode].val
 					obstacles.append(west)
 
 			except IndexError:
@@ -864,7 +871,7 @@ def run():
 
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
-    costmap_sub = rospy.Subscriber("/move_base/global_costmap/costmap",OccupancyGrid,costmapCallBack)
+    costmap_sub = rospy.Subscriber("/move_base/global_costmap/costmap_updates",OccupancyGridUpdate,costmapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
