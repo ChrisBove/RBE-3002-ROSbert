@@ -61,12 +61,12 @@ def navToPose(goal):
 
 
     print "spin!" #turn to calculated angle
-    rotateLocal(initialTurn)
+    if not haltNow: rotateLocal(initialTurn)
     print "move!" #move in straight line specified distance to new pose
-    driveSmooth(0.25, distance)
+    if not haltNow: driveSmooth(0.25, distance)
     #rospy.sleep(2)
     print "spin!" #spin to final angle 
-    rotate(desiredT)
+    if not haltNow: rotate(desiredT)
     print "done"
     status = True
     if not haltNow:
@@ -98,6 +98,7 @@ def spinWheels(u1, u2, time):
 
 #This function accepts a speed and a distance for the robot to move in a straight line
 def driveStraight(speed, distance):
+    haltNow = False
     """This function accepts a speed and a distance for the robot to move in a straight line"""
     global pose
 
@@ -127,7 +128,9 @@ def driveSmooth(speed, distance):
 
 
 def rotate(angle):
+    haltNow = False
     """This rotates the robot to the angle specified in world coordinates."""
+    turning_pub.publish(True)
     global odom_list
     global pose
     if (angle > 180 or angle<-180):
@@ -166,16 +169,19 @@ def rotate(angle):
         lastError = error
 
         vel.angular.z = angularZ #sets angular velocity 
-        pub.publish(vel)
+        if not haltNow: pub.publish(vel)
         error = angle-math.degrees(pose.orientation.z) #recalc error
         rospy.sleep(0.05)
     #once finished, stop
     vel.angular.z = 0.0
     if not haltNow:
         pub.publish(vel)
+    turning_pub.publish(False)
 
 #This function is duplicated, not good practice, but rotates the robot by its local frame
 def rotateLocal(angle):
+    haltNow = False
+    turning_pub.publish(True)
     """This rotates the robot to the angle specified in local coordinates (left 90 degrees)."""
     global odom_list
     global pose
@@ -233,12 +239,14 @@ def rotateLocal(angle):
         lastError = error
         
         vel.angular.z = angularZ #sets angular velocity
-        pub.publish(vel)
+        if not haltNow: 
+            pub.publish(vel)
         error = endingAngle - math.degrees(pose.orientation.z)
         rospy.sleep(0.05)
     vel.angular.z = 0.0
     if not haltNow:
         pub.publish(vel)
+    turning_pub.publish(False)
 
 def executeTrajectory():
     """This function sequentially calls methods to perform a trajectory."""
@@ -275,11 +283,10 @@ def readBumper(msg):
         #executeTrajectory()
 
 def stopCallback(msg):
-    #if 
-    if msg:
-        haltNow = True
-        publishTwist(0, 0) #stop!
-        haltNow = True
+    print "Stop Callback!"
+    haltNow = True
+    publishTwist(0, 0) #stop!
+    haltNow = True
 
 def wiggleCallback(wiggleTime):
     if wiggleTime:
@@ -335,6 +342,7 @@ if __name__ == '__main__':
     status_pub = rospy.Publisher('/moves_done', Bool, None, queue_size=1) #publishes when robot is done moving
     stop_sub = rospy.Subscriber('stop_move', Bool, stopCallback, queue_size=1)
     wiggle_sub = rospy.Subscriber('wiggle_move', Bool, wiggleCallback, queue_size=1)
+    turning_pub = rospy.Publisher('/actively_turning', Bool, None, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     

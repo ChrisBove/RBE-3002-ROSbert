@@ -83,8 +83,12 @@ def localCostmapCallBack(data):
     global localCostOffsetX
     global localCostOffsetY
     localCostmapgrid = data
-    localCostresolution = data.info.resolution
+    localCostResolution = data.info.resolution
     localCostmapData = data.data
+    localCostWidth = data.info.width
+    localCostHeight = data.info.height
+    localCostOffsetX = data.info.origin.position.x
+    localCostOffsetY = data.info.origin.position.y
  
     print "LocalCostmap Update"
     #print data.info
@@ -99,7 +103,7 @@ def isInLocalCostMap(x,y):
 	if(x < 0 or y < 0):
 		return False
 	# is point within 0 and width and 0 and height?
-	if( ( 0 <= x and localCostWidth > x) and ( 0 <= y and localCostWeight > y)):
+	if( ( 0 <= x and localCostWidth > x) and ( 0 <= y and localCostHeight > y)):
 		return True
 	else:
 		return False
@@ -110,7 +114,7 @@ def icebergAhead(distance):
 	# calculate the indices or positions of squares that will be in front of the robot
 	xpos = math.cos(math.radians(theta))*distance
 	ypos = math.sin(math.radians(theta))*distance
-	numGridThings = math.ceil(distance/resolution)
+	numGridThings = int(math.ceil(distance/resolution))
 
 	if xpos == 0:
 		xpos = 0.0001
@@ -133,8 +137,8 @@ def icebergAhead(distance):
 			#expand out left right up down from each of those points along the path
 			for x in range(-5, 6): # we think the robot radius is 5*resolution
 				for y in range(-5, 6):
-					resultX = pointX + (localCostresolution*x)
-					resultY = pointY + (localCostresolution*y)
+					resultX = pointX + (localCostResolution*x)
+					resultY = pointY + (localCostResolution*y)
 					indexesToCheck.append(getIndexFromLocalCostMap(resultX,resultY))
 
 
@@ -903,6 +907,9 @@ def statusCallback(status):
     global moveDone
     moveDone = status
 
+def turningCallback(status):
+	actively_turning = status
+
 #Main handler of the project
 def run():
 
@@ -928,6 +935,9 @@ def run():
     global pub_obs
     global moveDone
     moveDone = Bool()
+    global actively_turning
+    actively_turning = Bool()
+    actively_turning = False
     global expandedPath
     expandedPath = list()
 
@@ -950,6 +960,7 @@ def run():
     move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
     stop_pub = rospy.Publisher('stop_move', Bool, None, queue_size=1)
     wiggle_pub = rospy.Publisher('wiggle_move', Bool, None, queue_size=1)
+    turning_sub = rospy.Subscriber('/actively_turning', Bool, turningCallback, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
@@ -982,9 +993,11 @@ def run():
                 print "doing a new waypoint:"
                 print waypt
                 # if this is the last waypoint, instead take the goal orientation
+                isLastWaypoint = False
                 if (abs(goalX - waypt.x) <= resolution) and (abs(goalY - waypt.y) <= resolution):
                     print "This waypoint is the goal"
                     orientation = goalOrientation
+                    isLastWayPoint = True
                 #calculate end orientation for waypoint - perhaps the angle to the next one? or just our current heading?
                 else:
                     orientation = pose.orientation
@@ -994,6 +1007,7 @@ def run():
                 wayPose.pose.position.y = waypt.y
                 wayPose.pose.position.z = 0
                 wayPose.pose.orientation = orientation
+                moveDone = False
                 move_pub.publish(wayPose)
                 #wait for robot to arrive at waypoint (should be a service?)
                 errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
@@ -1009,8 +1023,7 @@ def run():
                     errorTheta = goalTheta - theta 
 
                     # check if an obstacle popped into our view
-
-                    if(icebergAhead(math.abs(errorDist))):
+                    if(icebergAhead(abs(errorDist)) and not actively_turning):
                     	print "ICE BERG AHEAD!!!! stop and replan"
                     	stop_pub.publish(True) #send a stop command to our movement guy
                     	somethingWentWrong = True
@@ -1025,6 +1038,9 @@ def run():
                     rospy.sleep(0.1)
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
+                if not somethingWentWrong and isLastWaypoint:
+                	goalRead = False
+                break # we only want to do one waypoint, then replan
             if not somethingWentWrong:    
             	print "done robot movements"
             	goalRead = False
