@@ -73,25 +73,13 @@ def publishCells(grid):
 
 #Main handler of the project
 def run():
-<<<<<<< HEAD
 	global mapData
 
 	map_sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
 	rospy.init_node('lab5')
 	while (1 and not rospy.is_shutdown()):
 		if mapData:
-=======
 
-    map_sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
-
-
-
-	rospy.init_node('lab5')
-
-
-	while (1 and not rospy.is_shutdown()):
-		if mapData
->>>>>>> origin/master
 			boldlyGo()
 
 
