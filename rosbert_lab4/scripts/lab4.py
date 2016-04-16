@@ -27,7 +27,7 @@ class aNode:
 		self.adjacent = list()
 		self.f = 0
 		self.cameFrom = -1
-	def addParent(self, index): 
+	def addParent(self, index):  
 		self.cameFrom = (index)
 
 # reads in global map
