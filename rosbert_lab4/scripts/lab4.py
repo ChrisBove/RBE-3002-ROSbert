@@ -93,6 +93,16 @@ def localCostmapCallBack(data):
     print "LocalCostmap Update"
     #print data.info
 
+
+#returns in meters the point of the current index
+def getLocalMapWorldPointFromIndex(index):
+	point=Point()
+	#print "GetX: %i" % getX(index)
+	point.x=(getLocalCostMapX(index)*resolution)+ localCostOffsetY + (.5 * resolution)
+	point.y=(getLocalCostMapY(index)*resolution)+ localCostOffsetY + (.5 * resolution)
+	point.z=0
+	return point
+
 #returns the index of a point in the local costmap frame. make sure it is in map before sending it here
 def getIndexFromLocalCostMap(x,y):
 	return int(((y)*localCostWidth) + x)
@@ -108,13 +118,73 @@ def isInLocalCostMap(x,y):
 	else:
 		return False
 
+#returns the x value of the index
+def getLocalCostMapX(index):
+	adjusted = index + 1
+	if (adjusted % localCostWidth) == 0:
+		return localCostWidth - 1
+	else:
+		return (adjusted % localCostWidth) - 1
+
+#returns the y value of the index
+def getLocalCostMapY(index):
+	adjusted = index
+	return math.floor(adjusted/localCostWidth)   
+
+#returns in meters the point of the current index
+def getLocalCostMapPointFromIndex(index):
+	point=Point()
+	point.x=getLocalCostMapX(index)
+	point.y=getLocalCostMapY(index)
+	point.z=0
+	return point
+
+# returns the index number given a point in the world
+def getLocalCostMapIndexFromWorldPoint(x,y):
+	#calculate the index coordinates
+	indexX = int(((x- localCostOffsetX) - (.5*resolution))/resolution)
+	indexY = int(((y- localCostOffsetY) - (.5*resolution))/resolution)
+	
+	index = int (((indexY)* localCostWidth) + indexX) 
+	return index
+
+
 # returns true if the local costmap thinks an obstacle is straight ahead w/in distance
 def icebergAhead(distance):
 	#grab the robot position and angle
+
+	print getIndexFromLocalCostMap(40,40)
+	actualIndexes = list()
+	actualIndexes.append(getIndexFromLocalCostMap(40,40))
+
+
+	#pubIceberg(actualIndexes)
+	print theta
 	# calculate the indices or positions of squares that will be in front of the robot
-	xpos = math.cos(math.radians(theta))*distance
-	ypos = math.sin(math.radians(theta))*distance
-	numGridThings = int(math.ceil(distance/resolution))
+	xpos = abs((math.cos(math.radians(theta))*(distance/resolution))) + 40
+	ypos = abs((math.sin(math.radians(theta))*(distance/resolution))) + 40
+	actualIndexes.append (getIndexFromLocalCostMap(xpos,ypos))
+
+	numGridThings = int(math.ceil(distance/localCostResolution))
+
+	for i in range(0, numGridThings):
+		newDistance = i
+		xpos = (math.cos(math.radians(theta))*i) + 40
+		ypos = (math.sin(math.radians(theta))*i) + 40
+		#actualIndexes.append (getIndexFromLocalCostMap(xpos,ypos))
+
+	for i in range(30, 50):
+		for j in range (30, 50):
+			actualIndexes.append(getIndexFromLocalCostMap(i,j))
+	for index in actualIndexes:
+		tempX = 2
+
+	actualIndexes.append(0)
+	actualIndexes.append(79)
+	actualIndexes.append(getIndexFromLocalCostMap(0,79))
+
+	pubIceberg(actualIndexes)
+	print "xpos: %f ypos: %f numGridThings: %i" % (xpos, ypos, numGridThings)
 
 	if xpos == 0:
 		xpos = 0.0001
@@ -142,9 +212,8 @@ def icebergAhead(distance):
 					indexesToCheck.append(getIndexFromLocalCostMap(resultX,resultY))
 
 
-	pubIceberg(indexesToCheck)
 	# iterate through and see if any have a cost greater than 90
-	for index in indexesToCheck:
+	for index in actualIndexes:
 		if localCostmapData[index] >= 90:
 			return True # if so, return ice berg ahead!!!
 
@@ -895,7 +964,7 @@ def pubIceberg(indexes):
 	cells.cell_height = resolution
 
 	for i in indexes:
-		point = getWorldPointFromIndex(i)
+		point = getLocalMapWorldPointFromIndex(i)
 		cells.cells.append(point)
 	iceberg_pub.publish(cells)
 
