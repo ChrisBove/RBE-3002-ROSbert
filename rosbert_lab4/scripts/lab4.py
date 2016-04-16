@@ -142,6 +142,7 @@ def icebergAhead(distance):
 					indexesToCheck.append(getIndexFromLocalCostMap(resultX,resultY))
 
 
+	pubIceberg(indexesToCheck)
 	# iterate through and see if any have a cost greater than 90
 	for index in indexesToCheck:
 		if localCostmapData[index] >= 90:
@@ -886,6 +887,18 @@ def pubGoal(grid):
 		cells.cells.append(point)
 	goal_pub.publish(cells)
 
+def pubIceberg(indexes):
+
+	cells = GridCells()
+	cells.header.frame_id = 'map'
+	cells.cell_width = resolution
+	cells.cell_height = resolution
+
+	for i in indexes:
+		point = getWorldPointFromIndex(i)
+		cells.cells.append(point)
+	iceberg_pub.publish(cells)
+
 #keeps track of current location and orientation
 def tCallback(event):
     global pose
@@ -940,6 +953,7 @@ def run():
     actively_turning = False
     global expandedPath
     expandedPath = list()
+    global iceberg_pub
 
 
     rospy.init_node('lab3')
@@ -961,6 +975,7 @@ def run():
     stop_pub = rospy.Publisher('stop_move', Bool, None, queue_size=1)
     wiggle_pub = rospy.Publisher('wiggle_move', Bool, None, queue_size=1)
     turning_sub = rospy.Subscriber('/actively_turning', Bool, turningCallback, queue_size=1)
+    iceberg_pub = rospy.Publisher('iceberg_check', GridCells, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
@@ -971,6 +986,8 @@ def run():
 
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
+        print "Iceberg ahead?" 
+        print icebergAhead(0.5)
         if goalRead:
             moveDone = False
             path = aStar()
