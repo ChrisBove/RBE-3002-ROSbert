@@ -5,7 +5,9 @@ from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianc
 from nav_msgs.msg import Odometry, OccupancyGrid
 import numpy as np
 import math
-import lab4.py as lab4
+from lab4 import *
+#from rosbert_lab4.scripts.lab4.py import *
+
 
 
 # reads in global map
@@ -32,6 +34,11 @@ def boldlyGo():
 	unidentifiedCells = list()
 	openCells = list()
 	obstacles = list()
+
+	unidentifiedCells = (node for node in mapData if node.val -1)
+	openCells = (node for node in mapData if node.val <= 40 and node.val > -1)
+	obstacles = (node for node in mapData if node.val > 40)
+
 
 	
 
@@ -66,6 +73,14 @@ def publishCells(grid):
 
 #Main handler of the project
 def run():
+<<<<<<< HEAD
+	global mapData
+
+	map_sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+	rospy.init_node('lab5')
+	while (1 and not rospy.is_shutdown()):
+		if mapData:
+=======
 
     map_sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
 
@@ -76,6 +91,7 @@ def run():
 
 	while (1 and not rospy.is_shutdown()):
 		if mapData
+>>>>>>> origin/master
 			boldlyGo()
 
 
