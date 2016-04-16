@@ -5,6 +5,7 @@ from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianc
 from nav_msgs.msg import Odometry, OccupancyGrid
 import numpy as np
 import math
+from lab4 import *
 #from rosbert_lab4.scripts.lab4.py import *
 
 
