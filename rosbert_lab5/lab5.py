@@ -52,7 +52,8 @@ def initMap():
 	print "map created" 
 
 #finds the frontiers on the map. puts them in a list of objects?
-def lewisAndClark():
+#a two dimensional list of border nodes. maybe a dictionary?
+def spock():
 
 	unidentifiedCells = (cells for cells in mapData if cells == -1)	#cells that haven't been seen
 	openCells = (cells for cells in mapData if cells <= 40 and cells >= -1)#cells that aren't obstacles
@@ -61,7 +62,7 @@ def lewisAndClark():
 
 #called after map topic is published.
 #This fucntion goes to the closest unexplored area.
-def boldlyGo():
+def captainKirk():
 	unidentifiedCells = list()
 	openCells = list()
 	obstacles = list()
@@ -74,7 +75,7 @@ def boldlyGo():
 
 
 #I think this guy will just spin.
-def sacagawea():
+def scotty():
 
 	return 0
 	
@@ -125,10 +126,10 @@ def run():
 	if mapData:
 		lab4.initMap()
 		while (not mapcomplete and not rospy.is_shutdown()):
-			sacagawea()
-			lewisAndClark()
-			mapcomplete = boldlyGo()
-			sacagawea()
+			scotty()
+			spock()
+			mapcomplete = captainKirk()
+			scotty()
 
 
 
