@@ -51,17 +51,22 @@ def initMap():
 
 	print "map created" 
 
+#finds the frontiers on the map. puts them in a list of objects?
+def lewisAndClark():
+
+	unidentifiedCells = (cells for cells in mapData if cells == -1)	#cells that haven't been seen
+	openCells = (cells for cells in mapData if cells <= 40 and cells >= -1)#cells that aren't obstacles
+	obstacles = (cells for cells in mapData if cells > 40)			#cells that are obstacles
+
+
 #called after map topic is published.
 #This fucntion goes to the closest unexplored area.
-
 def boldlyGo():
 	unidentifiedCells = list()
 	openCells = list()
 	obstacles = list()
 
-	unidentifiedCells = (cells for cells in mapData if cells == -1)	#cells that haven't been seen
-	openCells = (cells for cells in mapData if cells <= 40 and cells >= -1)#cells that aren't obstacles
-	obstacles = (cells for cells in mapData if cells > 40)			#cells that are obstacles
+
 
 	lab4.publishObstacles(obstacles,resolution)
 
@@ -69,7 +74,7 @@ def boldlyGo():
 
 
 #I think this guy will just spin.
-def lookAround():
+def sacagawea():
 
 	return 0
 	
@@ -120,9 +125,10 @@ def run():
 	if mapData:
 		lab4.initMap()
 		while (not mapcomplete and not rospy.is_shutdown()):
-			lookAround()
+			sacagawea()
+			lewisAndClark()
 			mapcomplete = boldlyGo()
-			lookAround()
+			sacagawea()
 
 
 
