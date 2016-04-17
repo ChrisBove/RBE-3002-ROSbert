@@ -5,10 +5,22 @@ from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianc
 from nav_msgs.msg import Odometry, OccupancyGrid
 import numpy as np
 import math
-from lab4 import *
+import lab4 as lab4
 #from rosbert_lab4.scripts.lab4.py import *
 
-
+class aNode: 
+	def __init__(self, index, val, huer, g): 
+		self.index = index
+		self.point = getWorldPointFromIndex(index)
+		self.val = val 
+		self.weight = val
+		self.huer = huer 
+		self.g = g 
+		self.adjacent = list()
+		self.f = 0
+		self.cameFrom = -1
+	def addParent(self, index): 
+		self.cameFrom = (index)
 
 # reads in global map
 def mapCallBack(data):
@@ -29,22 +41,47 @@ def mapCallBack(data):
     print data.info
 
 
-#this finds doors/frontiers
+#takes map data and converts it into nodes, calls linkMap function
+def initMap(): 
+	print "creating map" 
+	global frontier
+	for i in range(0, width*height):
+		node = aNode(i,mapData[i],heuristic(i),0.0)
+		G.append(node) 
+
+	print "map created" 
+
+#finds the frontiers on the map. puts them in a list of objects?
+def lewisAndClark():
+
+	unidentifiedCells = (cells for cells in mapData if cells == -1)	#cells that haven't been seen
+	openCells = (cells for cells in mapData if cells <= 40 and cells >= -1)#cells that aren't obstacles
+	obstacles = (cells for cells in mapData if cells > 40)			#cells that are obstacles
+
+
+#called after map topic is published.
+#This fucntion goes to the closest unexplored area.
 def boldlyGo():
 	unidentifiedCells = list()
 	openCells = list()
 	obstacles = list()
 
-	unidentifiedCells = (node for node in mapData if node.val -1)
-	openCells = (node for node in mapData if node.val <= 40 and node.val > -1)
-	obstacles = (node for node in mapData if node.val > 40)
 
 
+	lab4.publishObstacles(obstacles,resolution)
+
+	return False
+
+
+#I think this guy will just spin.
+def sacagawea():
+
+	return 0
 	
 
 #publishes map to rviz using gridcells type
 def publishCells(grid):
-	global pub
+	global pub	
 	#print "publishing"
 
     # resolution and offset of the map
@@ -54,7 +91,7 @@ def publishCells(grid):
 	cells.cell_width = resolution 
 	cells.cell_height = resolution
 
-	for i in range(1,height): #height should be set to hieght of grid
+	for i in range(1,height): #height should be set to height of grid
 		k=k+1
 		for j in range(1,width): #width should be set to width of grid
 			k=k+1
@@ -72,15 +109,28 @@ def publishCells(grid):
 
 
 #Main handler of the project
+#this function looks around, 
+#calls boldly go, 
+#looks around again to see if we can call boldly go again
 def run():
 	global mapData
-
+	global width
+	global height
 	map_sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
 	rospy.init_node('lab5')
-	while (1 and not rospy.is_shutdown()):
-		if mapData:
+	
+	mapcomplete = False
 
-			boldlyGo()
+
+	if mapData:
+		lab4.initMap()
+		while (not mapcomplete and not rospy.is_shutdown()):
+			sacagawea()
+			lewisAndClark()
+			mapcomplete = boldlyGo()
+			sacagawea()
+
+
 
 
 	rospy.sleep(2)  

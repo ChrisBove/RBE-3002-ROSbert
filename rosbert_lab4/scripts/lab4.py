@@ -434,7 +434,7 @@ def expandObs(map):
 			except IndexError:
 				pass
 
-	publishObstacles(obstacles)
+	publishObstacles(obstacles, resolution)
 
 def expandPath(path):
 	obstacles = list()
@@ -800,16 +800,16 @@ def publishFrontier(grid):
         cells.cells.append(point)
     pub_frontier.publish(cells)  
 
-def publishObstacles(grid):
+def publishObstacles(grid, mapresolution):
 	global pub_obs
     #print "publishing traversal"
 
-        # resolution and offset of the map
+        # mapresolution and offset of the map
 	k=0
 	cells = GridCells()
 	cells.header.frame_id = 'map'
-	cells.cell_width = resolution 
-	cells.cell_height = resolution
+	cells.cell_width = mapresolution 
+	cells.cell_height = mapresolution
 
 	for node in grid:
 		point=Point()
