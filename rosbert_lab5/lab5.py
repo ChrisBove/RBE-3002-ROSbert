@@ -54,71 +54,44 @@ def initMap():
 #finds the frontiers on the map. puts them in a list of objects?
 #a two dimensional list of border nodes. maybe a dictionary?
 def spock():
+	global edgelist
+	global frontier
+
+	frontier = list
+
 	unidentifiedCells = list()
 	openCells = list()
 	obstacles = list()
-
+	edgelist = list()
 
 	unidentifiedCells = (cells for cells in mapData if cells == -1)	#cells that haven't been seen
 	openCells = (cells for cells in mapData if cells <= 40 and cells >= -1)#cells that aren't obstacles
 	obstacles = (cells for cells in mapData if cells > 40)			#cells that are obstacles
 
-	for cells in openCells
-		try:
-			if(isInMapXY(obsx + distance*resolution, obsy)):
-				eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
-				east = G[eastindex]
-				if(east.weight < obsNode.val):
-					east.weight = obsNode.val
-				obstacles.append(east)
-			if(isInMapXY(obsx - distance*resolution, obsy)):
-				westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
-				west = G[westindex]
-				if(west.weight < obsNode.val):
-					west.weight = obsNode.val
-				obstacles.append(west)
-			if(isInMapXY(obsx,obsy + distance*resolution)):
-				northindex =  getIndexFromWorldPoint(obsx,obsy + distance*resolution)
-				north = G[northindex]
-				if(north.weight < obsNode.val):
-					north.weight = obsNode.val
-				obstacles.append(north)
-			if(isInMapXY(obsx,obsy - distance*resolution)):
-				southindex =  getIndexFromWorldPoint(obsx,obsy - distance*resolution)
-				south = G[southindex]
-				if(south.weight < obsNode.val):
-					south.weight = obsNode.val
-				obstacles.append(south)
-				numberOfNodesExpanded = numberOfNodesExpanded + 1
+	for cell in openCells:
+		for neighbor in lab4.findNeighbors(cell):
+			if neighbor in unidentifiedCells:
+				frontier.add(cell)
 
-			if(isInMapXY(obsx+distance*resolution,obsy + distance*resolution)):
-				northeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy + distance*resolution)
-				northeast = G[northeastindex]
-				if(northeast.weight < obsNode.val):
-					northeast.weight = obsNode.val
-				obstacles.append(northeast)
-				numberOfNodesExpanded = numberOfNodesExpanded + 1
-			if(isInMapXY(obsx-distance*resolution,obsy + distance*resolution)):
-				northwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy + distance*resolution)
-				northwest = G[northwestindex]
-				if(northwest.weight < obsNode.val):
-					northwest.weight = obsNode.val
-				obstacles.append(northwest)
-				numberOfNodesExpanded = numberOfNodesExpanded + 1
-			if(isInMapXY(obsx+distance*resolution,obsy - distance*resolution)):
-				southeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy - distance*resolution)
-				southeast = G[southeastindex]
-				if(southeast.weight < obsNode.val):
-					southeast.weight = obsNode.val
-				obstacles.append(southeast)
-				numberOfNodesExpanded = numberOfNodesExpanded + 1
-			if(isInMapXY(obsx-distance*resolution,obsy - distance*resolution)):
-				southwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy - distance*resolution)
-				southwest = G[southwestindex]
-				if(southwest.weight < obsNode.val):
-					southwest.weight = obsNode.val
-				obstacles.append(southwest)
-				numberOfNodesExpanded = numberOfNodesExpanded + 1
+	
+	for cell in frontier if cell not in listCheck2D(cell, edgelist):
+		edgelist.add(findedge(cell,list))
+ 
+def findedge(cell,list):
+	for neighbor in lab4.findNeighbors(cell) if neighbor in frontier:
+		if neighbor not in list:
+			list.add(neighbor)
+			findedge(neighbor)
+
+	return list
+
+def listCheck2D(cell, multilist):
+	for list in multilist:
+		if cell in list:
+			return True
+		else:
+			return False
+
 
 #called after map topic is published.
 #This fucntion goes to the closest unexplored area.
