@@ -68,23 +68,34 @@ def spock():
 	openCells = (cells for cells in mapData if cells <= 40 and cells >= -1)#cells that aren't obstacles
 	obstacles = (cells for cells in mapData if cells > 40)			#cells that are obstacles
 
+
+	#if a cell has neighbors in the unidentified zone, it is a frontier
 	for cell in openCells:
 		for neighbor in lab4.findNeighbors(cell):
 			if neighbor in unidentifiedCells:
 				frontier.add(cell)
 
-	
+	#if a node hasn't been added to an edge yet, add all of its attached nodes to a new list
 	for cell in frontier if cell not in listCheck2D(cell, edgelist):
-		edgelist.add(findedge(cell,list))
+		edgelist.add(findedge(cell,list()))
  
+ 
+#recursive strategy for travelling along edges to enumerate the frontier groups
 def findedge(cell,list):
+	#For neighbors of cells in the frontier
+	if cell not in list:
+		list.add(cell)
 	for neighbor in lab4.findNeighbors(cell) if neighbor in frontier:
 		if neighbor not in list:
+			#add it to the list of the edge
 			list.add(neighbor)
-			findedge(neighbor)
+			#find its connected neighbors and add them to the list in a similar manner
+			findedge(neighbor,list)
 
 	return list
 
+
+#simply checks through a list of lists
 def listCheck2D(cell, multilist):
 	for list in multilist:
 		if cell in list:
