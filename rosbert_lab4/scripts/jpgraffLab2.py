@@ -6,7 +6,7 @@
 
 import rospy, tf, numpy, math
 from kobuki_msgs.msg import BumperEvent
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist, Pose
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
@@ -53,6 +53,9 @@ def navToPose(goal):
     print "spin!" #spin to final angle 
     rotate(desiredT)
     print "done"
+    arrival = Bool()
+    arrival.data = True
+    arrival_pub.publish(arrival)
 
 
 
@@ -206,7 +209,8 @@ if __name__ == '__main__':
     pose = Pose()
     pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, None, queue_size=10) # Publisher for commanding robot motion
     bumper_sub = rospy.Subscriber('/mobile_base/events/bumper', BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
-    goal_sub = rospy.Subscriber('/jpg_nav', PoseStamped, navToPose, queue_size=1)
+    goal_sub = rospy.Subscriber('/rosbert_pose', PoseStamped, navToPose, queue_size=1)
+    arrival_pub = rospy.Publisher('/moves_done',Bool, queue_size = 1)
     #goal_sub = rospy.Subscriber('/clicked_point', PoseStamped, executeTrajectory, queue_size = 1) 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
@@ -219,4 +223,5 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         rospy.spin()
     
+
     print "Lab 2 complete!"

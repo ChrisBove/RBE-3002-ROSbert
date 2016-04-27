@@ -27,6 +27,7 @@ def publishTwist(lin_Vel, ang_Vel):
 
 def navToPose(goal):
     """Drive to a goal subscribed to from /move_base_simple/goal"""
+    haltNow = False # someone intends us to move, clear last stop command
     status = Bool()
     status = False
     status_pub.publish(status)
@@ -60,15 +61,16 @@ def navToPose(goal):
 
 
     print "spin!" #turn to calculated angle
-    rotateLocal(initialTurn)
+    if not haltNow: rotateLocal(initialTurn)
     print "move!" #move in straight line specified distance to new pose
-    driveSmooth(0.25, distance)
+    if not haltNow: driveSmooth(0.25, distance)
     #rospy.sleep(2)
     print "spin!" #spin to final angle 
-    rotate(desiredT)
+    if not haltNow: rotate(desiredT)
     print "done"
     status = True
-    status_pub.publish(status)
+    if not haltNow:
+        status_pub.publish(status)
 
 
 
@@ -96,6 +98,7 @@ def spinWheels(u1, u2, time):
 
 #This function accepts a speed and a distance for the robot to move in a straight line
 def driveStraight(speed, distance):
+    haltNow = False
     """This function accepts a speed and a distance for the robot to move in a straight line"""
     global pose
 
@@ -104,12 +107,12 @@ def driveStraight(speed, distance):
     atTarget = False
     #Loop until the distance between the attached frame and the origin is equal to the
     #distance specified 
-    while (not atTarget and not rospy.is_shutdown()):
+    while (not atTarget and not rospy.is_shutdown() and not haltNow):
         currentX = pose.position.x
         currentY = pose.position.y
         currentDistance = math.sqrt(pow(currentX-initialX,2) + pow(currentY-initialY,2)) #Distance formula
         #reached current distance, stop robot and loop        
-        if (currentDistance >= distance):
+        if (currentDistance >= distance) or haltNow:
             atTarget = True
             publishTwist(0, 0)
         #not at desired position, keep moving forward
@@ -125,7 +128,9 @@ def driveSmooth(speed, distance):
 
 
 def rotate(angle):
+    haltNow = False
     """This rotates the robot to the angle specified in world coordinates."""
+    turning_pub.publish(True)
     global odom_list
     global pose
     if (angle > 180 or angle<-180):
@@ -147,7 +152,7 @@ def rotate(angle):
     errorIncreases = 0
     lastError = error
 
-    while ((abs(error) > 2) and not rospy.is_shutdown()):
+    while ((abs(error) > 2) and not rospy.is_shutdown() and not haltNow):
         #start the robot's motion and determine if we are at the right angle.    
         print "theta: %d  Error: %d" % (math.degrees(pose.orientation.z), error)
 
@@ -164,15 +169,19 @@ def rotate(angle):
         lastError = error
 
         vel.angular.z = angularZ #sets angular velocity 
-        pub.publish(vel)
+        if not haltNow: pub.publish(vel)
         error = angle-math.degrees(pose.orientation.z) #recalc error
         rospy.sleep(0.05)
     #once finished, stop
     vel.angular.z = 0.0
-    pub.publish(vel)
+    if not haltNow:
+        pub.publish(vel)
+    turning_pub.publish(False)
 
 #This function is duplicated, not good practice, but rotates the robot by its local frame
 def rotateLocal(angle):
+    haltNow = False
+    turning_pub.publish(True)
     """This rotates the robot to the angle specified in local coordinates (left 90 degrees)."""
     global odom_list
     global pose
@@ -216,7 +225,7 @@ def rotateLocal(angle):
     errorIncreases = 0
     lastError = error
 
-    while ((abs(error) > 2) and not rospy.is_shutdown()):
+    while ((abs(error) > 2) and not rospy.is_shutdown() and not haltNow):
         #start the robot's motion and determine if we are at the right angle.    
         print "theta: %d  Error: %d EndingAngle: %d" % (math.degrees(pose.orientation.z), error, endingAngle)
         #check if our error got worse, changed direction and we should flip the velocity
@@ -230,11 +239,14 @@ def rotateLocal(angle):
         lastError = error
         
         vel.angular.z = angularZ #sets angular velocity
-        pub.publish(vel)
+        if not haltNow: 
+            pub.publish(vel)
         error = endingAngle - math.degrees(pose.orientation.z)
         rospy.sleep(0.05)
     vel.angular.z = 0.0
-    pub.publish(vel)
+    if not haltNow:
+        pub.publish(vel)
+    turning_pub.publish(False)
 
 def executeTrajectory():
     """This function sequentially calls methods to perform a trajectory."""
@@ -267,7 +279,30 @@ def readBumper(msg):
     # if center button is pressed, execute the trajectory
     if ((msg.state == 1) and (msg.bumper == 1)):
         print "Bumper pressed!"
-        executeTrajectory()
+        
+        #executeTrajectory()
+
+def stopCallback(msg):
+    print "Stop Callback!"
+    haltNow = True
+    publishTwist(0, 0) #stop!
+    haltNow = True
+
+def wiggleCallback(wiggleTime):
+    if wiggleTime:
+        print "Wiggle Time!!!"
+        # rotate robot back and forth several times
+        angle = 45
+        startingAngle = math.degrees(pose.orientation.z)
+        for i in range(0, 7):
+            rotateLocal(angle)
+            rospy.sleep(1)
+            rotateLocal(-angle)
+            rospy.sleep(1)
+        rotate(startingAngle)
+        rospy.sleep(0.3)
+        status_pub.publish(True)
+
 
 #keeps track of current location and orientation
 def tCallback(event):
@@ -297,12 +332,17 @@ if __name__ == '__main__':
     global pub
     global pose
     global odom_list
+    global haltNow
+    haltNow = False
     #global odom_tf
     pose = Pose()
     pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, None, queue_size=10) # Publisher for commanding robot motion
     bumper_sub = rospy.Subscriber('/mobile_base/events/bumper', BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
     goal_sub = rospy.Subscriber('/clicked_pose', PoseStamped, navToPose, queue_size=1) #callback for setting pose goal
     status_pub = rospy.Publisher('/moves_done', Bool, None, queue_size=1) #publishes when robot is done moving
+    stop_sub = rospy.Subscriber('stop_move', Bool, stopCallback, queue_size=1)
+    wiggle_sub = rospy.Subscriber('wiggle_move', Bool, wiggleCallback, queue_size=1)
+    turning_pub = rospy.Publisher('/actively_turning', Bool, None, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     

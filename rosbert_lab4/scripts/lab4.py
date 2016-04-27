@@ -1,5 +1,9 @@
 #!/usr/bin/env python 
 
+#scp -rf /home/joshgraff/catkin_ws/src/RBE-3002-ROSbert/rosbert_lab4 hawkeye@192.168.1.101:~/Desktop/rosbert_lab4
+
+
+
 import rospy
 from nav_msgs.msg import GridCells
 from std_msgs.msg import String, Bool
@@ -47,6 +51,104 @@ def mapCallBack(data):
     offsetX = data.info.origin.position.x
     offsetY = data.info.origin.position.y
     print data.info
+
+
+# reads in global map
+def costmapCallBack(data):
+    global costmapData
+    global costwidth
+    global costheight
+    global costmapgrid
+    global costresolution
+    global costoffsetX
+    global costoffsetY
+    costmapgrid = data
+    costresolution = data.info.resolution
+    costmapData = data.data
+    #costoffsetX = data.x
+    #costoffsetY = data.y
+
+    #for i in costmapData:
+    #	G[getIndexFromWorldPoint(costoffsetX,costoffsetY)+i] = costmapData[i]
+
+    print data.info
+
+# reads in global map
+def localCostmapCallBack(data):
+    global localCostmapData
+    global localCostWidth
+    global localCostHeight
+    global localCostMapGrid
+    global localCostResolution
+    global localCostOffsetX
+    global localCostOffsetY
+    localCostmapgrid = data
+    localCostResolution = data.info.resolution
+    localCostmapData = data.data
+    localCostWidth = data.info.width
+    localCostHeight = data.info.height
+    localCostOffsetX = data.info.origin.position.x
+    localCostOffsetY = data.info.origin.position.y
+ 
+    print "LocalCostmap Update"
+    #print data.info
+
+#returns the index of a point in the local costmap frame. make sure it is in map before sending it here
+def getIndexFromLocalCostMap(x,y):
+	return int(((y)*localCostWidth) + x)
+
+#checks if the passed point is in the local cost map
+def isInLocalCostMap(x,y):
+	#catch if point is negative
+	if(x < 0 or y < 0):
+		return False
+	# is point within 0 and width and 0 and height?
+	if( ( 0 <= x and localCostWidth > x) and ( 0 <= y and localCostHeight > y)):
+		return True
+	else:
+		return False
+
+# returns true if the local costmap thinks an obstacle is straight ahead w/in distance
+def icebergAhead(distance):
+	#grab the robot position and angle
+	# calculate the indices or positions of squares that will be in front of the robot
+	xpos = math.cos(math.radians(theta))*distance
+	ypos = math.sin(math.radians(theta))*distance
+	numGridThings = int(math.ceil(distance/resolution))
+
+	if xpos == 0:
+		xpos = 0.0001
+
+	slope = (ypos)/(xpos)
+
+	indexesToCheck = list()
+	for i in range(0,numGridThings):
+		#calculate positions from line equation
+		pointX = resolution*i
+		pointY = pointX*slope
+		#calculate index of point, if it is in the map
+		if isInLocalCostMap(pointX,pointY):
+			thisIndex = getIndexFromLocalCostMap(pointX,pointY)
+			indexesToCheck.append(thisIndex)
+			#stash index into list
+
+			incrementalX = pointX
+			incrementalY = pointY
+			#expand out left right up down from each of those points along the path
+			for x in range(-5, 6): # we think the robot radius is 5*resolution
+				for y in range(-5, 6):
+					resultX = pointX + (localCostResolution*x)
+					resultY = pointY + (localCostResolution*y)
+					indexesToCheck.append(getIndexFromLocalCostMap(resultX,resultY))
+
+
+	# iterate through and see if any have a cost greater than 90
+	for index in indexesToCheck:
+		if localCostmapData[index] >= 90:
+			return True # if so, return ice berg ahead!!!
+
+	# if not, return false
+	return False
 
 def readStart(_startPos):
     global startRead
@@ -267,7 +369,7 @@ def expandObs(map):
 	robotSize = .25
 	obstacles = list()
 	map_obs = list()
-	map_obs = (node for node in G if node.val > 30)
+	map_obs = (node for node in G if node.val > 40)
 	for obsNode in map_obs:
 		obsx = obsNode.point.x
 		obsy = obsNode.point.y
@@ -334,6 +436,32 @@ def expandObs(map):
 
 	publishObstacles(obstacles, resolution)
 
+def expandPath(path):
+	obstacles = list()
+	for obsNode in path:
+		obsx = G[obsNode].point.x
+		obsy = G[obsNode].point.y
+
+		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
+			try:
+				if(isInMapXY(obsx + distance*resolution, obsy)):
+					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
+					east = G[eastindex]
+					if(east.weight < G[obsNode].val):
+						east.weight = G[obsNode].val
+					obstacles.append(east)
+				if(isInMapXY(obsx - distance*resolution, obsy)):
+					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
+					west = G[westindex]
+					if(west.weight < G[obsNode].val):
+						west.weight = G[obsNode].val
+					obstacles.append(west)
+
+			except IndexError:
+				pass
+
+	return obstacles
+
 
 #takes map data and converts it into nodes, calls linkMap function
 def initMap(): 
@@ -354,7 +482,7 @@ def adjCellCheck(current):
 	adjList =  findNeighbor(current.index) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.weight != 100):   #checks if cell is reachable  
+		if(currCell.weight != 100) and (currCell.weight != -1):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
 	publishTraversal(traversal)
@@ -362,7 +490,7 @@ def adjCellCheck(current):
 
 def evalNeighbor(nNode, current): 
 	if(nNode not in closedSet):  # check if neighbor node is in closedSet - it has already been traveled to
-		tentative = current.g + 1.4*resolution  #checks what the potential cost to reach the node is 
+		tentative = current.g + 1.4*resolution + costmapData[nNode.index] #checks what the potential cost to reach the node is 
 		frontier.append(nNode)   
 		publishFrontier(frontier)  # for rviz - publish node to frontier 
 		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
@@ -779,6 +907,9 @@ def statusCallback(status):
     global moveDone
     moveDone = status
 
+def turningCallback(status):
+	actively_turning = status
+
 #Main handler of the project
 def run():
 
@@ -804,10 +935,17 @@ def run():
     global pub_obs
     global moveDone
     moveDone = Bool()
+    global actively_turning
+    actively_turning = Bool()
+    actively_turning = False
+    global expandedPath
+    expandedPath = list()
 
 
     rospy.init_node('lab3')
     sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+    costmap_sub = rospy.Subscriber("/move_base/global_costmap/costmap",OccupancyGrid,costmapCallBack)
+    localCostMap_sub = rospy.Subscriber("/move_base/local_costmap/costmap", OccupancyGrid,localCostmapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
@@ -820,6 +958,9 @@ def run():
 
     move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
     move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
+    stop_pub = rospy.Publisher('stop_move', Bool, None, queue_size=1)
+    wiggle_pub = rospy.Publisher('wiggle_move', Bool, None, queue_size=1)
+    turning_sub = rospy.Subscriber('/actively_turning', Bool, turningCallback, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
@@ -833,24 +974,32 @@ def run():
         if goalRead:
             moveDone = False
             path = aStar()
+            expandedPath = expandPath(path)
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
             waypoints = getDouglasWaypoints(path)
+            waypoints.pop() # pop off these incorrect waypoints
+            waypoints.pop()
             publishWaypoints(waypoints)#publish waypoints
             print "Finished... beginning robot movements"
             #for each waypoint
+            somethingWentWrong = False
             for i,waypt in enumerate(waypoints):
-                #hack - skip the last waypoint. see issue tracker in github
-                if i >= len(waypoints)-2:
+            	if somethingWentWrong:
+            		break
+                
+                if i >= len(waypoints):
                     moveDone = False
                     break
                 print "doing a new waypoint:"
                 print waypt
                 # if this is the last waypoint, instead take the goal orientation
+                isLastWaypoint = False
                 if (abs(goalX - waypt.x) <= resolution) and (abs(goalY - waypt.y) <= resolution):
                     print "This waypoint is the goal"
                     orientation = goalOrientation
+                    isLastWayPoint = True
                 #calculate end orientation for waypoint - perhaps the angle to the next one? or just our current heading?
                 else:
                     orientation = pose.orientation
@@ -860,22 +1009,43 @@ def run():
                 wayPose.pose.position.y = waypt.y
                 wayPose.pose.position.z = 0
                 wayPose.pose.orientation = orientation
+                moveDone = False
                 move_pub.publish(wayPose)
                 #wait for robot to arrive at waypoint (should be a service?)
                 errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
                 errorTheta = goalTheta - theta 
                 print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
 
+                # calculate if an obstacle is in our path in the local costmap
+
+                #while we aren't done moving and we don't see an obstacle bw us and waypoint
                 while (not rospy.is_shutdown()) and not moveDone :
                     #chill out. Drink some coffee
                     errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
                     errorTheta = goalTheta - theta 
-                    rospy.sleep(0.5)
+
+                    # check if an obstacle popped into our view
+                    if(icebergAhead(abs(errorDist)) and not actively_turning):
+                    	print "ICE BERG AHEAD!!!! stop and replan"
+                    	stop_pub.publish(True) #send a stop command to our movement guy
+                    	somethingWentWrong = True
+                    	moveDone = False
+                    	#wiggle back and forth to get more readings to get the global map to update
+                    	wiggle_pub.publish(True)
+                    	while (not rospy.is_shutdown() and not moveDone):
+                    		rospy.sleep(0.5)
+
+
+                    	break
+                    rospy.sleep(0.1)
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
-                
-            print "done robot movements"
-            goalRead = False
+                if not somethingWentWrong and isLastWaypoint:
+                	goalRead = False
+                break # we only want to do one waypoint, then replan
+            if not somethingWentWrong:    
+            	print "done robot movements"
+            	goalRead = False
         rospy.sleep(2)  
         #print("Complete")
     
