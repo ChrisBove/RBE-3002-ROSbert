@@ -60,7 +60,7 @@ def spock():
 	global edgelist
 	global frontier
 
-	frontier = list
+	frontier = list()
 
 	unidentifiedCells = list()
 	openCells = list()
@@ -119,7 +119,7 @@ def captainKirk():
 
 
 
-	lab4.publishObstacles(obstacles,resolution)
+	#lab4.publishObstacles(obstacles,resolution)
 
 	return True
 
@@ -182,6 +182,8 @@ def run():
 	global mapData
 	global width
 	global height
+
+	global pub_frontier
 	map_sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
 
 	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
