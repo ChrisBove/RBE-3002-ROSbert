@@ -7,22 +7,23 @@ from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianc
 from nav_msgs.msg import Odometry, OccupancyGrid
 import numpy as np
 import math
-import lab4 as lab4
+import lab4_updated as lab4
+from lab4_updated import aNode
 #from rosbert_lab4.scripts.lab4.py import *
 
-class aNode: 
-	def __init__(self, index, val, huer, g): 
-		self.index = index
-		self.point = getWorldPointFromIndex(index)
-		self.val = val 
-		self.weight = val
-		self.huer = huer 
-		self.g = g 
-		self.adjacent = list()
-		self.f = 0
-		self.cameFrom = -1
-	def addParent(self, index): 
-		self.cameFrom = (index)
+# class aNode: 
+# 	def __init__(self, index, val, huer, g): 
+# 		self.index = index
+# 		self.point = getWorldPointFromIndex(index)
+# 		self.val = val 
+# 		self.weight = val
+# 		self.huer = huer 
+# 		self.g = g 
+# 		self.adjacent = list()
+# 		self.f = 0
+# 		self.cameFrom = -1
+# 	def addParent(self, index): 
+# 		self.cameFrom = (index)
 
 # reads in global map
 def mapCallBack(data):
@@ -147,6 +148,7 @@ def run():
 
 if __name__ == '__main__':
     try:
-        run()
+    	lab4.run()
+        #run()
     except rospy.ROSInterruptException:
         pass
