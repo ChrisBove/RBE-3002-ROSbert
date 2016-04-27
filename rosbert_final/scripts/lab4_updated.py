@@ -336,12 +336,12 @@ def expandObs(newMap):
 
 
 #takes map data and converts it into nodes
-def initMap( mWidth,mHeight): 
+def initMap( mWidth,mHeight, _mapData): 
 	newMap = list() 
 	print "creating map" 
 	global frontier
 	for i in range(0, mWidth*mHeight):
-		node = aNode(i,mapData[i],0,0.0)
+		node = aNode(i,_mapData[i],0,0.0)
 		newMap.append(node) 
 		frontier.append(0)
 	expandObs(newMap)
@@ -930,7 +930,7 @@ def run():
         publishCells(mapData) #publishing map data every 2 seconds
         if goalRead:
             moveDone = False
-            newMap = initMap(width,height)
+            newMap = initMap(width,height,mapData)
             path = aStar(newMap, goalIndex)
             print "Going to publish path"
             publishPath(noFilter(path))
