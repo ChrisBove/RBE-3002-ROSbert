@@ -75,7 +75,7 @@ def spock():
 	#if a cell has neighbors in the unidentified zone, it is a frontier
 	print "Finding frontier"
 	for cell in openCells:
-		for neighbor in lab4.findNeighbors(cell):
+		for neighbor in lab4.findNeighbor(cell):
 			if neighbor in unidentifiedCells:
 				frontier.add(cell)
 
@@ -194,7 +194,7 @@ def run():
 
 
 	if mapData:
-		lab4.initMap(width, height,mapData)
+		lab4.initMap(mapgrid)
 		while (not mapcomplete and not rospy.is_shutdown()):
 			scotty()
 			spock()
