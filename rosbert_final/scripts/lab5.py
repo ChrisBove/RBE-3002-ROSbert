@@ -73,27 +73,32 @@ def spock():
 
 
 	#if a cell has neighbors in the unidentified zone, it is a frontier
+	print "Finding frontier"
 	for cell in openCells:
 		for neighbor in lab4.findNeighbors(cell):
 			if neighbor in unidentifiedCells:
 				frontier.add(cell)
 
+	print "finding edges"
 	#if a node hasn't been added to an edge yet, add all of its attached nodes to a new list
-	for cell in frontier if cell not in listCheck2D(cell, edgelist):
-		edgelist.add(findedge(cell,list()))
+	for cell in frontier:
+		if not listCheck2D(cell, edgelist):
+			edgelist.add(findedge(cell,list()))
  
+ 	publishFrontier(edgelist)
  
 #recursive strategy for travelling along edges to enumerate the frontier groups
 def findedge(cell,list):
 	#For neighbors of cells in the frontier
 	if cell not in list:
 		list.add(cell)
-	for neighbor in lab4.findNeighbors(cell) if neighbor in frontier:
-		if neighbor not in list:
-			#add it to the list of the edge
-			list.add(neighbor)
-			#find its connected neighbors and add them to the list in a similar manner
-			findedge(neighbor,list)
+	for neighbor in lab4.findNeighbors(cell):
+		if neighbor in frontier:
+			if neighbor not in list:
+				#add it to the list of the edge
+				list.add(neighbor)
+				#find its connected neighbors and add them to the list in a similar manner
+				findedge(neighbor,list)
 
 	return list
 
@@ -116,7 +121,7 @@ def captainKirk():
 
 	lab4.publishObstacles(obstacles,resolution)
 
-	return False
+	return True
 
 
 #I think this guy will just spin.
@@ -125,7 +130,22 @@ def scotty():
 	return 0
 	
 
-#publishes map to rviz using gridcells type
+def publishFrontier(grid):
+    global pub_frontier
+        # resolution and offset of the map
+    k=0
+    cells = GridCells()
+    cells.header.frame_id = 'map'
+    cells.cell_width = resolution 
+    cells.cell_height = resolution
+
+    for node in grid:
+        point=Point()
+        point = getWorldPointFromIndex(node.index)
+        cells.cells.append(point)
+    pub_frontier.publish(cells) 
+
+
 def publishCells(grid):
 	global pub	
 	#print "publishing"
@@ -163,13 +183,18 @@ def run():
 	global width
 	global height
 	map_sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+
+	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
+
+
+
 	rospy.init_node('lab5')
 	
 	mapcomplete = False
 
 
 	if mapData:
-		lab4.initMap()
+		lab4.initMap(width, height,mapData)
 		while (not mapcomplete and not rospy.is_shutdown()):
 			scotty()
 			spock()
@@ -190,7 +215,7 @@ def run():
 
 if __name__ == '__main__':
     try:
-    	lab4.run()
-        #run()
+    	#lab4.run()
+        run()
     except rospy.ROSInterruptException:
         pass
