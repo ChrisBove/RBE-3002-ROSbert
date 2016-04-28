@@ -196,37 +196,38 @@ def pBR(point):
 
 
 #this adds the edges to the graphs
-def findNeighbor(index):	 
+def findNeighbor(index, eightconnected):	 
 	adjList = list() 
 
 	currentPoint = Point()
 	currentPoint.x = getX(index)
 	currentPoint.y = getY(index)
-	"""
-	#print "I is %i, x is %i, y is %i" % (i, currentPoint.x, currentPoint.y)
-	# try adding north
-	if(isInMap(pointAbove(currentPoint))):	
-		myPoint = pointAbove(currentPoint)
-		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
-	currentPoint.x = getX(index)
-	currentPoint.y = getY(index)
-	# try adding east
-	if(isInMap(pointRight(currentPoint))):
-		myPoint = pointRight(currentPoint)
-		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
-	currentPoint.x = getX(index)
-	currentPoint.y = getY(index)
-	# try adding south
-	if(isInMap(pointBelow(currentPoint))):
-		myPoint = pointBelow(currentPoint)
-		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
-	currentPoint.x = getX(index)
-	currentPoint.y = getY(index)
-	# try adding west
-	if(isInMap(pointLeft(currentPoint))):
-		myPoint = pointLeft(currentPoint)
-		adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
-	"""
+	
+	if eightconnected:
+		#print "I is %i, x is %i, y is %i" % (i, currentPoint.x, currentPoint.y)
+		# try adding north
+		if(isInMap(pointAbove(currentPoint))):	
+			myPoint = pointAbove(currentPoint)
+			adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+		currentPoint.x = getX(index)
+		currentPoint.y = getY(index)
+		# try adding east
+		if(isInMap(pointRight(currentPoint))):
+			myPoint = pointRight(currentPoint)
+			adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+		currentPoint.x = getX(index)
+		currentPoint.y = getY(index)
+		# try adding south
+		if(isInMap(pointBelow(currentPoint))):
+			myPoint = pointBelow(currentPoint)
+			adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+		currentPoint.x = getX(index)
+		currentPoint.y = getY(index)
+		# try adding west
+		if(isInMap(pointLeft(currentPoint))):
+			myPoint = pointLeft(currentPoint)
+			adjList.append(getIndexFromPoint(myPoint.x,myPoint.y))
+		
 
  #----------------- Diagonals -------------------------------# 
 	
@@ -367,7 +368,7 @@ def pubObInit():
 def adjCellCheck(current):
 	global adjList
 	global traversal
-	adjList =  findNeighbor(current.index) ## list of indexes of neighbor 
+	adjList =  findNeighbor(current.index,False) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
 		if(currCell.weight != 100):   #checks if cell is reachable  

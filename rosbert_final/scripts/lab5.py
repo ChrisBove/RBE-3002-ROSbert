@@ -56,7 +56,7 @@ def initMap():
 
 #finds the frontiers on the map. puts them in a list of objects?
 #a two dimensional list of border nodes. maybe a dictionary?
-def spock():
+def spock(G):
 	global edgelist
 	global frontier
 
@@ -66,39 +66,56 @@ def spock():
 	openCells = list()
 	obstacles = list()
 	edgelist = list()
+	frontiernodes = list()
+	
+	for cell in G:
+		if cell.weight == -1:
+			unidentifiedCells.append(cell)	#cells that haven't been seen
+	for cell in G:
+		if cell.weight <= 40 and cell.weight >= 0:#cells that aren't obstacles:
+			openCells.append(cell)
+	for cell in G:
+		if cell.weight > 40:
+			obstacles.append(cell) 			#cells that are obstacles
 
-	unidentifiedCells = (cells for cells in mapData if cells == -1)	#cells that haven't been seen
-	openCells = (cells for cells in mapData if cells <= 40 and cells >= -1)#cells that aren't obstacles
-	obstacles = (cells for cells in mapData if cells > 40)			#cells that are obstacles
-
+	print "Num unidentified: %d" % len(unidentifiedCells)
+	print "Num open: %d" % len(openCells)
 
 	#if a cell has neighbors in the unidentified zone, it is a frontier
 	print "Finding frontier"
 	for cell in openCells:
-		for neighbor in lab4.findNeighbor(cell):
-			if neighbor in unidentifiedCells:
-				frontier.add(cell)
+		for neighborindex in lab4.findNeighbor(cell.index,True):
+			if G[neighborindex].weight == -1 and G[neighborindex] not in frontier:#if the neighbor is unidentified
+				frontier.append(cell)
+				#print "append to frontier"
+
+	print "frontier size: %d" % len(frontier) 
 
 	print "finding edges"
-	#if a node hasn't been added to an edge yet, add all of its attached nodes to a new list
+	#if a node hasn't been appended to an edge yet, append all of its attached nodes to a new list
 	for cell in frontier:
 		if not listCheck2D(cell, edgelist):
-			edgelist.add(findedge(cell,list()))
+			edgelist.append(findedge(cell,list(),G))
+			print "=================  edge #: %d" % len(edgelist)
  
- 	publishFrontier(edgelist)
+
+ 	for edge in edgelist:
+ 		for node in edge:
+ 			frontiernodes.append(node)
+	publishFrontier(frontiernodes)
  
 #recursive strategy for travelling along edges to enumerate the frontier groups
-def findedge(cell,list):
+def findedge(cell,list,G):
 	#For neighbors of cells in the frontier
 	if cell not in list:
-		list.add(cell)
-	for neighbor in lab4.findNeighbors(cell):
-		if neighbor in frontier:
-			if neighbor not in list:
-				#add it to the list of the edge
-				list.add(neighbor)
-				#find its connected neighbors and add them to the list in a similar manner
-				findedge(neighbor,list)
+		list.append(cell)
+	for neighborindex in lab4.findNeighbor(cell.index,True):#return nodes that are neighbors
+		if G[neighborindex] in frontier and G[neighborindex] not in list:
+			#append it to the list of the edge
+			list.append(G[neighborindex])
+			print "node: %d" % neighborindex
+			#find its connected neighborindexs and append them to the list in a similar manner
+			findedge(G[neighborindex],list,G)
 
 	return list
 
@@ -141,7 +158,7 @@ def publishFrontier(grid):
 
     for node in grid:
         point=Point()
-        point = getWorldPointFromIndex(node.index)
+        point = lab4.getWorldPointFromIndex(node.index)
         cells.cells.append(point)
     pub_frontier.publish(cells) 
 
@@ -183,6 +200,7 @@ def run():
 	global width
 	global height
 
+
 	global pub_frontier
 	map_sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
 
@@ -196,10 +214,10 @@ def run():
 
 
 	if mapData:
-		lab4.initMap(mapgrid)
+		G = lab4.initMap(mapgrid)
 		while (not mapcomplete and not rospy.is_shutdown()):
 			scotty()
-			spock()
+			spock(G)
 			mapcomplete = captainKirk()
 			scotty()
 
