@@ -95,9 +95,15 @@ def spock(G):
 	#if a node hasn't been appended to an edge yet, append all of its attached nodes to a new list
 	for cell in frontier:
 		if not listCheck2D(cell, edgelist):
-			edgelist.append(findedge(cell,list(),G))
-			print "=================  edge #: %d" % len(edgelist)
- 
+			edge = findedge(cell,list(),G)
+			publishFrontier(edge)
+			if len(edge) > 10:
+				edgelist.append(edge)
+				print "=================  edge #: %d, size: %d" % (len(edgelist),len(edge))
+			else:
+				print "edge too small"
+ 		else:
+ 			pass
 
  	for edge in edgelist:
  		for node in edge:
@@ -105,19 +111,19 @@ def spock(G):
 	publishFrontier(frontiernodes)
  
 #recursive strategy for travelling along edges to enumerate the frontier groups
-def findedge(cell,list,G):
+def findedge(cell,edge,G):
 	#For neighbors of cells in the frontier
-	if cell not in list:
-		list.append(cell)
+	if cell not in edge:
+		edge.append(cell)
 	for neighborindex in lab4.findNeighbor(cell.index,True):#return nodes that are neighbors
-		if G[neighborindex] in frontier and G[neighborindex] not in list:
-			#append it to the list of the edge
-			list.append(G[neighborindex])
-			print "node: %d" % neighborindex
-			#find its connected neighborindexs and append them to the list in a similar manner
-			findedge(G[neighborindex],list,G)
+		if G[neighborindex] in frontier and G[neighborindex] not in edge:
+			#append it to the edge of the edge
+			edge.append(G[neighborindex])
+			#print "node: %d" % neighborindex
+			#find its connected neighborindexs and append them to the edge in a similar manner
+			findedge(G[neighborindex],edge,G)
 
-	return list
+	return edge
 
 
 #simply checks through a list of lists
