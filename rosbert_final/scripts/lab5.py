@@ -137,14 +137,63 @@ def listCheck2D(cell, multilist):
 
 #called after map topic is published.
 #This fucntion goes to the closest unexplored area.
+# @return True if we have completed the map
 def captainKirk():
+	"""Boldly goes where no man has gone before"""
+	distances = list() # list of float distances
+	centroids = list() # list of np 2-d arrays [x,y] world coordinates
+	minDistance = 99999
+	closestEdge = -1
 
 
+	# runs through and calculates straighline lengths for all of them
+	for i,edge in enumerate(edgelist):
+		# calculates straighline lengths for all of them
+		start = edge[0].point
+		end = edge[len(edge)-1].point
+		width = math.sqrt(pow(end.x-start.x,2)+pow(end.y-start.y,2))
+		
+		# filters out the edges which are smaller than the robot
+		if width <= 0.3:
+			#TODO need to add another filter to try running an astar path to that point
+			edgelist.remove(edge)
+		else:
+			# we assume all edges are concave away from robot - otherwise we could pick unknown space
+			#calculate vector between start and end of edge
+			vector = np.array([(end.x-start.x) + end.x, (end.y-start.y) + end.y])
+			normalized = vector/np.linalg.norm(vector)
 
+			#calculate the x,y along that vector that gets us the midpoint
+			centroid = (0.5*width)*normalized
+			centroid[0] += start.x
+			centroid[1] += start.y
 
-	#lab4.publishObstacles(obstacles,resolution)
+			########## I NEED ROBOT X AND Y!!! #####################
+			robotX = 1.2
+			robotY = 1.2
 
-	return True
+			# calculate straightline distance to the center of this edge from robot
+			distance = math.sqrt(pow(centroid[0]-robotX,2)+pow(centroid[1]-robotY,2))
+
+			#check if this is the shortest distance
+			if distance < minDistance:
+				minDistance = distance #update min distance
+				closestEdge = i # save which edge is best
+			distances.append(distance) # so the distances correspond to index of edgelist
+			centroids.append(centroid)
+	# checks if we still have any left - otherwise, notify the makers
+	if len(edgelist) > 0:
+		# chooses the one with the least cost - probably just straightline distance
+			#in the future, we could run Astar on all of them and choose the one with best path
+			# or have a history which picks the biggest one eventually
+		
+		# sends that as a goal to astar, lets robot move there and report it is done the move
+
+		return False
+	
+	# there are no more valid edges, 
+	else:
+		return True
 
 
 #I think this guy will just spin.
