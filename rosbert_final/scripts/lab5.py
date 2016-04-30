@@ -195,6 +195,8 @@ def captainKirk():
 		wayPose.pose.position.z = 0
 		wayPose.pose.orientation = orientation
 
+		global moveDone
+		moveDone = False
 		goalPub.publish(wayPose)
 		# sends that as a goal to astar, lets robot move there and report it is done the move
 		print "waiting for robot to move"
@@ -213,6 +215,8 @@ def waitForRobotToMove():
 
 #I think this guy will just spin.
 def scotty():
+	global moveDone
+	moveDone = False
 	spin_pub.publish(True)
 
 	print "Waiting for robot to finish spinning"
