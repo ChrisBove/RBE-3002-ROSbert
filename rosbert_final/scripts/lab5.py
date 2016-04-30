@@ -170,9 +170,8 @@ def captainKirk():
 			centroid[0] += start.x
 			centroid[1] += start.y
 
-			########## I NEED ROBOT X AND Y!!! #####################
-			robotX = 1.2
-			robotY = 1.2
+			robotX = pose.position.x
+			robotY = pose.position.y
 
 			# calculate straightline distance to the center of this edge from robot
 			distance = math.sqrt(pow(centroid[0]-robotX,2)+pow(centroid[1]-robotY,2))
@@ -188,9 +187,18 @@ def captainKirk():
 		# chooses the one with the least cost - probably just straightline distance
 			#in the future, we could run Astar on all of them and choose the one with best path
 			# or have a history which picks the biggest one eventually
-		
-		# sends that as a goal to astar, lets robot move there and report it is done the move
+		orientation = pose.orientation
+		#publish goal to topic to move the robot
+		wayPose = PoseStamped()
+		wayPose.pose.position.x = centroids[closestEdge][0]
+		wayPose.pose.position.y = centroids[closestEdge][1]
+		wayPose.pose.position.z = 0
+		wayPose.pose.orientation = orientation
 
+		goalPub.publish(wayPose)
+		# sends that as a goal to astar, lets robot move there and report it is done the move
+		print "waiting for robot to move"
+		rospy.sleep(30)
 		return False
 	
 	# there are no more valid edges, 
@@ -200,6 +208,18 @@ def captainKirk():
 
 #I think this guy will just spin.
 def scotty():
+	orientation = pose.orientation
+	#publish goal to topic to move the robot
+	wayPose = PoseStamped()
+	wayPose.pose.position.x = pose.position.x
+	wayPose.pose.position.y = pose.position.y
+	wayPose.pose.position.z = 0
+	wayPose.pose.orientation = orientation
+
+	goalPub.publish(wayPose)
+
+	print "Waiting for robot to move"
+	rospy.sleep(15)
 
 	return 0
 	
