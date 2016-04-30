@@ -206,9 +206,10 @@ def captainKirk():
 		return True
 
 def waitForRobotToMove():
+	global moveDone
 	while (not rospy.is_shutdown() and not moveDone):
 		rospy.sleep(0.1)
-		moveDone = False
+	moveDone = False
 
 #I think this guy will just spin.
 def scotty():
@@ -278,6 +279,7 @@ def tCallback(event):
     theta = math.degrees(yaw)
 
 def statusCallback(status):
+    print "statusCallback"
     global moveDone
     moveDone = True
 
@@ -309,7 +311,8 @@ def run():
 	global spin_pub
 	spin_pub = rospy.Publisher('spin_me', Bool, queue_size=1)
 
-	global moveDone = False
+	global moveDone
+	moveDone = False
 	move_status_sub = rospy.Subscriber("/moves_done", Bool, statusCallback)
 
 	# wait a second for publisher, subscribers, and TF
