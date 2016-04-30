@@ -142,6 +142,7 @@ def captainKirk():
 	centroids = list() # list of np 2-d arrays [x,y] world coordinates
 	minDistance = 99999
 	closestEdge = -1
+	centroidIndex = 0
 
 
 	# runs through and calculates straighline lengths for all of them
@@ -169,6 +170,9 @@ def captainKirk():
 			centroid = (0.5*width)*normalized
 			centroid[0] += start.x
 			centroid[1] += start.y
+			point = Point()
+			point.x = centroid[0]
+			point.y = centroid[1]
 
 			robotX = pose.position.x
 			robotY = pose.position.y
@@ -179,12 +183,13 @@ def captainKirk():
 			#check if this is the shortest distance
 			if distance < minDistance:
 				minDistance = distance #update min distance
-				closestEdge = i # save which edge is best
+				closestEdge = centroidIndex # save which edge is best
+				centroidIndex += centroidIndex
 			distances.append(distance) # so the distances correspond to index of edgelist
-			centroids.append(centroid)
+			centroids.append(point)
 	#TODO catch if we didn't find a closest edge index
 
-	print "The closest edge index: %i" % closestEdge
+	print "The closest edge index: %i" % centroidIndex
 	# checks if we still have any left - otherwise, notify the makers
 	if len(edgelist) > 0:
 		# chooses the one with the least cost - probably just straightline distance
@@ -193,8 +198,8 @@ def captainKirk():
 		orientation = pose.orientation
 		#publish goal to topic to move the robot
 		wayPose = PoseStamped()
-		wayPose.pose.position.x = centroids[closestEdge][0]
-		wayPose.pose.position.y = centroids[closestEdge][1]
+		wayPose.pose.position.x = centroids[closestEdge].x
+		wayPose.pose.position.y = centroids[closestEdge].y
 		wayPose.pose.position.z = 0
 		wayPose.pose.orientation = orientation
 
@@ -208,6 +213,7 @@ def captainKirk():
 	
 	# there are no more valid edges, 
 	else:
+		print "No more valid edges"
 		return True
 
 def waitForRobotToMove():
@@ -353,7 +359,7 @@ def run():
 		G = lab4.initMap(mapgrid)
 		spock(G)
 		mapcomplete = captainKirk()
-		scotty()
+		#scotty()
 
 
 
