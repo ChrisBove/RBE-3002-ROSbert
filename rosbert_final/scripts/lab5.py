@@ -65,15 +65,15 @@ def spock(G):
 
 	frontier = list()
 
-	unidentifiedCells = list()
+	#unidentifiedCells = list()
 	openCells = list()
 	obstacles = list()
 	edgelist = list()
 	frontiernodes = list()
 	
-	for cell in G:
-		if cell.weight == -1:
-			unidentifiedCells.append(cell)	#cells that haven't been seen
+	# for cell in G:
+	# 	if cell.weight == -1:
+	# 		unidentifiedCells.append(cell)	#cells that haven't been seen
 	for cell in G:
 		if cell.weight <= 40 and cell.weight >= 0:#cells that aren't obstacles:
 			openCells.append(cell)
@@ -81,7 +81,7 @@ def spock(G):
 		if cell.weight > 40:
 			obstacles.append(cell) 			#cells that are obstacles
 
-	print "Num unidentified: %d" % len(unidentifiedCells)
+	#print "Num unidentified: %d" % len(unidentifiedCells)
 	print "Num open: %d" % len(openCells)
 
 	#if a cell has neighbors in the unidentified zone, it is a frontier
