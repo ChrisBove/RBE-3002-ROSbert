@@ -136,7 +136,7 @@ def rotate(angle):
     # calculate error
     error = angle-math.degrees(pose.orientation.z)
     #determine which way to turn based on the error
-    angularZ = 0.75 # velocity for turnning
+    angularZ = 0.5 # velocity for turnning
     # turn CCW if the error is positive, CW if negative
     if(error < 0):
         angularZ *= -1.0 # flip velocity
@@ -202,7 +202,7 @@ def rotateLocal(angle):
     #calc error
     error = angle-(startingAngle - math.degrees(pose.orientation.z))
     #determine which way to turn based on the angle
-    angularZ = -0.75
+    angularZ = -0.5
     # turn positive in situations where the angles and errors are in certain ranges
     #to optimize which direction we turn
     hackyError = endingAngle - startingAngle
