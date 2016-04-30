@@ -267,7 +267,7 @@ def readBumper(msg):
     # if center button is pressed, execute the trajectory
     if ((msg.state == 1) and (msg.bumper == 1)):
         print "Bumper pressed!"
-        executeTrajectory()
+        #executeTrajectory()
 
 #keeps track of current location and orientation
 def tCallback(event):
