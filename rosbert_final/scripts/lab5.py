@@ -198,29 +198,25 @@ def captainKirk():
 		goalPub.publish(wayPose)
 		# sends that as a goal to astar, lets robot move there and report it is done the move
 		print "waiting for robot to move"
-		rospy.sleep(30)
+		waitForRobotToMove()
 		return False
 	
 	# there are no more valid edges, 
 	else:
 		return True
 
+def waitForRobotToMove():
+	while (not rospy.is_shutdown() and not moveDone):
+		rospy.sleep(0.1)
+		moveDone = False
 
 #I think this guy will just spin.
 def scotty():
-	orientation = pose.orientation
-	#publish goal to topic to move the robot
-	wayPose = PoseStamped()
-	wayPose.pose.position.x = pose.position.x
-	wayPose.pose.position.y = pose.position.y
-	wayPose.pose.position.z = 0
-	wayPose.pose.orientation = orientation
+	spin_pub.publish(True)
 
-	goalPub.publish(wayPose)
-
-	print "Waiting for robot to move"
-	rospy.sleep(15)
-
+	print "Waiting for robot to finish spinning"
+	waitForRobotToMove()
+	print "Spinning complete"
 	return 0
 	
 
@@ -281,7 +277,9 @@ def tCallback(event):
     pose.orientation.z = yaw
     theta = math.degrees(yaw)
 
-
+def statusCallback(status):
+    global moveDone
+    moveDone = True
 
 #Main handler of the project
 #this function looks around, 
@@ -307,6 +305,12 @@ def run():
 	pose = Pose()
 	rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
 	odom_list = tf.TransformListener() #listner for robot location
+
+	global spin_pub
+	spin_pub = rospy.Publisher('spin_me', Bool, queue_size=1)
+
+	global moveDone = False
+	move_status_sub = rospy.Subscriber("/moves_done", Bool, statusCallback)
 
 	# wait a second for publisher, subscribers, and TF
 	rospy.sleep(2)

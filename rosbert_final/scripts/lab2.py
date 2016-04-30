@@ -291,6 +291,14 @@ def tCallback(event):
     pose.orientation.z = yaw
     theta = math.degrees(yaw)
 
+def spinCallback(msg):
+    print "spinning!!!"
+    rotateLocal(120)
+    rotateLocal(120)
+    rotateLocal(120)
+    print "done spinning"
+    status_pub.publish(True)
+
 # This is the program's main function
 if __name__ == '__main__':
     rospy.init_node('cbove_lab2')
@@ -303,6 +311,7 @@ if __name__ == '__main__':
     bumper_sub = rospy.Subscriber('/mobile_base/events/bumper', BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
     goal_sub = rospy.Subscriber('/clicked_pose', PoseStamped, navToPose, queue_size=1) #callback for setting pose goal
     status_pub = rospy.Publisher('/moves_done', Bool, None, queue_size=1) #publishes when robot is done moving
+    spin_pub = rospy.Subscriber('/spin_me', Bool, spinCallback, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
