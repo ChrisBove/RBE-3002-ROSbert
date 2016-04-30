@@ -294,7 +294,8 @@ def run():
 	mapcomplete = False
 
 
-	while not width:
+	while not width and not rospy.is_shutdown():
+		rospy.sleep(0.1)
 		pass
 	G = lab4.initMap(mapgrid)
 	while (not mapcomplete and not rospy.is_shutdown()):
