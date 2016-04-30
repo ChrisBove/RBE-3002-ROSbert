@@ -182,6 +182,9 @@ def captainKirk():
 				closestEdge = i # save which edge is best
 			distances.append(distance) # so the distances correspond to index of edgelist
 			centroids.append(centroid)
+	#TODO catch if we didn't find a closest edge index
+
+	print "The closest edge index: %i" % closestEdge
 	# checks if we still have any left - otherwise, notify the makers
 	if len(edgelist) > 0:
 		# chooses the one with the least cost - probably just straightline distance
@@ -195,8 +198,8 @@ def captainKirk():
 		wayPose.pose.position.z = 0
 		wayPose.pose.orientation = orientation
 
-		global moveDone
-		moveDone = False
+		global spinDone
+		spinDone = False
 		goalPub.publish(wayPose)
 		# sends that as a goal to astar, lets robot move there and report it is done the move
 		print "waiting for robot to move"
@@ -208,19 +211,25 @@ def captainKirk():
 		return True
 
 def waitForRobotToMove():
-	global moveDone
-	while (not rospy.is_shutdown() and not moveDone):
+	global navDone
+	while (not rospy.is_shutdown() and not navDone):
 		rospy.sleep(0.1)
-	moveDone = False
+	navDone = False
+
+def waitForRobotToSpin():
+	global spinDone
+	while (not rospy.is_shutdown() and not spinDone):
+		rospy.sleep(0.1)
+	spinDone = False
 
 #I think this guy will just spin.
 def scotty():
-	global moveDone
-	moveDone = False
+	global spinDone
+	spinDone = False
 	spin_pub.publish(True)
 
 	print "Waiting for robot to finish spinning"
-	waitForRobotToMove()
+	waitForRobotToSpin()
 	print "Spinning complete"
 	return 0
 	
@@ -282,10 +291,15 @@ def tCallback(event):
     pose.orientation.z = yaw
     theta = math.degrees(yaw)
 
-def statusCallback(status):
-    print "statusCallback"
-    global moveDone
-    moveDone = True
+def spinStatusCallback(status):
+    print "spinStatusCallback"
+    global spinDone
+    spinDone = True
+
+def navStatusCallback(status):
+    print "navStatusCallback"
+    global navDone
+    navDone = True
 
 #Main handler of the project
 #this function looks around, 
@@ -299,7 +313,7 @@ def run():
 	width = 0
 	global height
 	global pub_frontier
-	map_sub = rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, mapCallBack)
+	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, mapCallBack)
 
 	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
 
@@ -315,9 +329,14 @@ def run():
 	global spin_pub
 	spin_pub = rospy.Publisher('spin_me', Bool, queue_size=1)
 
-	global moveDone
-	moveDone = False
-	move_status_sub = rospy.Subscriber("/moves_done", Bool, statusCallback)
+	# this is for spinning
+	global spinDone
+	spinDone = False
+	move_status_sub = rospy.Subscriber('/spin_done', Bool, spinStatusCallback)
+
+	global navDone
+	navDone = False
+	nav_status_sub = rospy.Subscriber('nav_done', Bool, navStatusCallback)
 
 	# wait a second for publisher, subscribers, and TF
 	rospy.sleep(2)
@@ -331,6 +350,7 @@ def run():
 	G = lab4.initMap(mapgrid)
 	while (not mapcomplete and not rospy.is_shutdown()):
 		scotty()
+		G = lab4.initMap(mapgrid)
 		spock(G)
 		mapcomplete = captainKirk()
 		scotty()

@@ -352,7 +352,8 @@ def initMap( _mapGrid):
 		newMap.append(node) 
 		frontier.append(0)
 	
-	expandObs(newMap)
+	#TODO Fix expand obs 
+	#expandObs(newMap)
 	
 	print "map created" 
 	return newMap
@@ -935,6 +936,8 @@ def run():
     move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
     move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
 
+    nav_complete_pub = rospy.Publisher('nav_done', Bool, None, queue_size=1)
+
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
     odom_list = tf.TransformListener() #listner for robot location
@@ -988,7 +991,7 @@ def run():
                     rospy.sleep(0.5)
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
-                
+            nav_complete_pub.publish(True)    
             print "done robot movements"
             goalRead = False
         rospy.sleep(2)  
