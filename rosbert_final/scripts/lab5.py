@@ -159,6 +159,10 @@ def captainKirk():
 			edgelist.remove(edge)
 		else:
 			# we assume all edges are concave away from robot - otherwise we could pick unknown space
+			
+			#TODO Instead of just going to center of the straighline, we could run rdp on it
+			# first, and then find the middle waypoint. That would fix the curve issue
+
 			#calculate vector between start and end of edge
 			vector = np.array([(end.x-start.x) + end.x, (end.y-start.y) + end.y])
 			normalized = vector/np.linalg.norm(vector)
