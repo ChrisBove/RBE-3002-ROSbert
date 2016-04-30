@@ -43,6 +43,7 @@ def mapCallBack(data):
     height = data.info.height
     offsetX = data.info.origin.position.x
     offsetY = data.info.origin.position.y
+    mapReceived = True
     print data.info
 
 
@@ -99,13 +100,8 @@ def spock(G):
 		if not listCheck2D(cell, edgelist):
 			edge = findedge(cell,list(),G)
 			publishFrontier(edge)
-			if len(edge) > 10:
-				edgelist.append(edge)
-				print "=================  edge #: %d, size: %d" % (len(edgelist),len(edge))
-			else:
-				print "edge too small"
- 		else:
- 			pass
+			edgelist.append(edge)
+			print "=================  edge #: %d, size: %d" % (len(edgelist),len(edge))
 
  	for edge in edgelist:
  		for node in edge:
@@ -133,8 +129,8 @@ def listCheck2D(cell, multilist):
 	for list in multilist:
 		if cell in list:
 			return True
-		else:
-			return False
+	else:
+		return False
 
 
 #called after map topic is published.
@@ -276,11 +272,10 @@ def run():
 
 	global mapData
 	global width
+	width = 0
 	global height
-
-
 	global pub_frontier
-	map_sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+	map_sub = rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, mapCallBack)
 
 	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
 
@@ -299,13 +294,14 @@ def run():
 	mapcomplete = False
 
 
-	if mapData:
-		G = lab4.initMap(mapgrid)
-		while (not mapcomplete and not rospy.is_shutdown()):
-			scotty()
-			spock(G)
-			mapcomplete = captainKirk()
-			scotty()
+	while not width:
+		pass
+	G = lab4.initMap(mapgrid)
+	while (not mapcomplete and not rospy.is_shutdown()):
+		scotty()
+		spock(G)
+		mapcomplete = captainKirk()
+		scotty()
 
 
 
