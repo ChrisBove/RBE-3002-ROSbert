@@ -5,6 +5,8 @@ from nav_msgs.msg import GridCells
 from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry, OccupancyGrid
+import tf
+from tf.transformations import euler_from_quaternion
 import numpy as np
 import math
 import lab4_updated as lab4
@@ -246,7 +248,22 @@ def publishCells(grid):
 				cells.cells.append(point)
 	pub.publish(cells)           
 
+#keeps track of current location and orientation
+def tCallback(event):
+    global pose
+    global theta
 
+    odom_list.waitForTransform('map', 'base_footprint', rospy.Time(0), rospy.Duration(1.0))
+    (position, orientation) = odom_list.lookupTransform('map','base_footprint', rospy.Time(0))
+    pose.position.x=position[0]
+    pose.position.y=position[1]
+
+    odomW = orientation
+    q = [odomW[0], odomW[1], odomW[2], odomW[3]]
+    roll, pitch, yaw = euler_from_quaternion(q)
+    #convert yaw to degrees
+    pose.orientation.z = yaw
+    theta = math.degrees(yaw)
 
 
 
@@ -255,6 +272,8 @@ def publishCells(grid):
 #calls boldly go, 
 #looks around again to see if we can call boldly go again
 def run():
+	rospy.init_node('lab5')
+
 	global mapData
 	global width
 	global height
@@ -265,9 +284,17 @@ def run():
 
 	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
 
+	global goalPub #publishing the goal to astar
+	goalPub = rospy.Publisher('goal_pose', PoseStamped, queue_size=1)
 
+	global pose
+	global odom_list
+	pose = Pose()
+	rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
+	odom_list = tf.TransformListener() #listner for robot location
 
-	rospy.init_node('lab5')
+	# wait a second for publisher, subscribers, and TF
+	rospy.sleep(2)
 	
 	mapcomplete = False
 
