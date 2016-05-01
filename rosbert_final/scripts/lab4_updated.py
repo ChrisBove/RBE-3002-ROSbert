@@ -372,7 +372,7 @@ def adjCellCheck(current):
 	adjList =  findNeighbor(current.index,False) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.weight != 100):   #checks if cell is reachable  
+		if(currCell.weight != 100) and (currCell.weight != -1):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
 	publishTraversal(traversal)
@@ -955,12 +955,14 @@ def run():
             publishPath(noFilter(path))
             print "Publishing waypoints"
             waypoints = getDouglasWaypoints(path)
+            waypoints.pop() # pop off these incorrect waypoints		
+            waypoints.pop()
             publishWaypoints(waypoints)#publish waypoints
             print "Finished... beginning robot movements"
             #for each waypoint
             for i,waypt in enumerate(waypoints):
                 #hack - skip the last waypoint. see issue tracker in github
-                if i >= len(waypoints)-2:
+                if i >= len(waypoints):
                     moveDone = False
                     break
                 print "doing a new waypoint:"
