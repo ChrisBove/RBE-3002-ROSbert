@@ -319,7 +319,7 @@ def run():
 	width = 0
 	global height
 	global pub_frontier
-	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, mapCallBack)
+	map_sub = rospy.Subscriber('/map', OccupancyGrid, mapCallBack)
 
 	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
 
