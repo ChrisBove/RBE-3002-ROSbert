@@ -51,10 +51,11 @@ def mapCallBack(data):
 def initMap(): 
 	print "creating map" 
 	global frontier
+	global G
 	for i in range(0, width*height):
 		node = aNode(i,mapData[i],heuristic(i),0.0)
 		G.append(node) 
-
+	expandObs(G)
 	print "map created" 
 
 #finds the frontiers on the map. puts them in a list of objects?
@@ -161,24 +162,29 @@ def captainKirk():
 			
 			#TODO Instead of just going to center of the straighline, we could run rdp on it
 			# first, and then find the middle waypoint. That would fix the curve issue
+			thing = int(math.ceil(len(edge)/2))
+			point = Point()
+			point.x = edge[thing].point.x
+			point.y = edge[thing].point.y
+
 
 			#calculate vector between start and end of edge
-			vector = np.array([(end.x-start.x) + end.x, (end.y-start.y) + end.y])
-			normalized = vector/np.linalg.norm(vector)
+			# vector = np.array([(end.x-start.x) + end.x, (end.y-start.y) + end.y])
+			# normalized = vector/np.linalg.norm(vector)
 
-			#calculate the x,y along that vector that gets us the midpoint
-			centroid = (0.5*width)*normalized
-			centroid[0] += start.x
-			centroid[1] += start.y
-			point = Point()
-			point.x = centroid[0]
-			point.y = centroid[1]
+			# #calculate the x,y along that vector that gets us the midpoint
+			# centroid = (0.5*width)*normalized
+			# centroid[0] += start.x
+			# centroid[1] += start.y
+			# point = Point()
+			# point.x = centroid[0]
+			# point.y = centroid[1]
 
 			robotX = pose.position.x
 			robotY = pose.position.y
 
 			# calculate straightline distance to the center of this edge from robot
-			distance = math.sqrt(pow(centroid[0]-robotX,2)+pow(centroid[1]-robotY,2))
+			distance = math.sqrt(pow(point.x-robotX,2)+pow(point.y-robotY,2))
 
 			#check if this is the shortest distance
 			if distance < minDistance:
@@ -307,11 +313,93 @@ def navStatusCallback(status):
     global navDone
     navDone = True
 
+
+
+
+def expandObs(athingamabob):
+	global pub_obs
+	global G
+	print "expanding nodes"
+	numberOfNodesExpanded = 0
+	robotSize = .25
+	obstacles = list()
+	map_obs = list()
+	map_obs = (node for node in G if node.val > 0)
+	for obsNode in map_obs:
+		obsx = obsNode.point.x
+		obsy = obsNode.point.y
+
+		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
+			try:
+				if(isInMapXY(obsx + distance*resolution, obsy)):
+					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
+					east = G[eastindex]
+					if(east.weight < obsNode.val):
+						east.weight = obsNode.val
+					obstacles.append(east)
+				if(isInMapXY(obsx - distance*resolution, obsy)):
+					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
+					west = G[westindex]
+					if(west.weight < obsNode.val):
+						west.weight = obsNode.val
+					obstacles.append(west)
+				if(isInMapXY(obsx,obsy + distance*resolution)):
+					northindex =  getIndexFromWorldPoint(obsx,obsy + distance*resolution)
+					north = G[northindex]
+					if(north.weight < obsNode.val):
+						north.weight = obsNode.val
+					obstacles.append(north)
+				if(isInMapXY(obsx,obsy - distance*resolution)):
+					southindex =  getIndexFromWorldPoint(obsx,obsy - distance*resolution)
+					south = G[southindex]
+					if(south.weight < obsNode.val):
+						south.weight = obsNode.val
+					obstacles.append(south)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+
+				if(isInMapXY(obsx+distance*resolution,obsy + distance*resolution)):
+					northeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy + distance*resolution)
+					northeast = G[northeastindex]
+					if(northeast.weight < obsNode.val):
+						northeast.weight = obsNode.val
+					obstacles.append(northeast)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx-distance*resolution,obsy + distance*resolution)):
+					northwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy + distance*resolution)
+					northwest = G[northwestindex]
+					if(northwest.weight < obsNode.val):
+						northwest.weight = obsNode.val
+					obstacles.append(northwest)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx+distance*resolution,obsy - distance*resolution)):
+					southeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy - distance*resolution)
+					southeast = G[southeastindex]
+					if(southeast.weight < obsNode.val):
+						southeast.weight = obsNode.val
+					obstacles.append(southeast)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx-distance*resolution,obsy - distance*resolution)):
+					southwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy - distance*resolution)
+					southwest = G[southwestindex]
+					if(southwest.weight < obsNode.val):
+						southwest.weight = obsNode.val
+					obstacles.append(southwest)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+
+			except IndexError:
+				pass
+
+	publishObstacles(obstacles, resolution)
+	return G
+
+
+
 #Main handler of the project
 #this function looks around, 
 #calls boldly go, 
 #looks around again to see if we can call boldly go again
 def run():
+	global G
 	rospy.init_node('lab5')
 
 	global mapData
@@ -353,7 +441,7 @@ def run():
 	while not width and not rospy.is_shutdown():
 		rospy.sleep(0.1)
 		pass
-	G = lab4.initMap(mapgrid)
+
 	while (not mapcomplete and not rospy.is_shutdown()):
 		scotty()
 		G = lab4.initMap(mapgrid)
