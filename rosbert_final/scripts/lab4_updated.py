@@ -352,6 +352,7 @@ def initMap( _mapGrid):
 		newMap.append(node) 
 		frontier.append(0)
 	
+	#TODO Fix expand obs 
 	expandObs(newMap)
 	
 	print "map created" 
@@ -371,17 +372,17 @@ def adjCellCheck(current):
 	adjList =  findNeighbor(current.index,False) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.weight != 100):   #checks if cell is reachable  
+		if(currCell.weight != 100) and (currCell.weight != -1):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
-	publishTraversal(traversal)
+	#publishTraversal(traversal)
 						
 
 def evalNeighbor(nNode, current): 
 	if(nNode not in closedSet):  # check if neighbor node is in closedSet - it has already been traveled to
 		tentative = current.g + 1.4*resolution  #checks what the potential cost to reach the node is 
 		frontier.append(nNode)   
-		publishFrontier(frontier)  # for rviz - publish node to frontier 
+		#publishFrontier(frontier)  # for rviz - publish node to frontier 
 		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
 			nNode.huer = heuristic(nNode.index) # calcute huristic of current node. 
 			nNode.g = tentative # set cost to reach node 
@@ -935,6 +936,8 @@ def run():
     move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
     move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
 
+    nav_complete_pub = rospy.Publisher('nav_done', Bool, None, queue_size=1)
+
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
     odom_list = tf.TransformListener() #listner for robot location
@@ -952,12 +955,14 @@ def run():
             publishPath(noFilter(path))
             print "Publishing waypoints"
             waypoints = getDouglasWaypoints(path)
+            waypoints.pop() # pop off these incorrect waypoints		
+            waypoints.pop()
             publishWaypoints(waypoints)#publish waypoints
             print "Finished... beginning robot movements"
             #for each waypoint
             for i,waypt in enumerate(waypoints):
                 #hack - skip the last waypoint. see issue tracker in github
-                if i >= len(waypoints)-2:
+                if i >= len(waypoints):
                     moveDone = False
                     break
                 print "doing a new waypoint:"
@@ -988,7 +993,7 @@ def run():
                     rospy.sleep(0.5)
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
-                
+            nav_complete_pub.publish(True)    
             print "done robot movements"
             goalRead = False
         rospy.sleep(2)  

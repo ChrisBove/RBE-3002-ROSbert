@@ -5,6 +5,8 @@ from nav_msgs.msg import GridCells
 from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist, Point, Pose, PoseStamped, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry, OccupancyGrid
+import tf
+from tf.transformations import euler_from_quaternion
 import numpy as np
 import math
 import lab4_updated as lab4
@@ -49,10 +51,11 @@ def mapCallBack(data):
 def initMap(): 
 	print "creating map" 
 	global frontier
+	global G
 	for i in range(0, width*height):
 		node = aNode(i,mapData[i],heuristic(i),0.0)
 		G.append(node) 
-
+	expandObs(G)
 	print "map created" 
 
 #finds the frontiers on the map. puts them in a list of objects?
@@ -63,15 +66,15 @@ def spock(G):
 
 	frontier = list()
 
-	unidentifiedCells = list()
+	#unidentifiedCells = list()
 	openCells = list()
 	obstacles = list()
 	edgelist = list()
 	frontiernodes = list()
 	
-	for cell in G:
-		if cell.weight == -1:
-			unidentifiedCells.append(cell)	#cells that haven't been seen
+	# for cell in G:
+	# 	if cell.weight == -1:
+	# 		unidentifiedCells.append(cell)	#cells that haven't been seen
 	for cell in G:
 		if cell.weight <= 40 and cell.weight >= 0:#cells that aren't obstacles:
 			openCells.append(cell)
@@ -79,7 +82,7 @@ def spock(G):
 		if cell.weight > 40:
 			obstacles.append(cell) 			#cells that are obstacles
 
-	print "Num unidentified: %d" % len(unidentifiedCells)
+	#print "Num unidentified: %d" % len(unidentifiedCells)
 	print "Num open: %d" % len(openCells)
 
 	#if a cell has neighbors in the unidentified zone, it is a frontier
@@ -133,19 +136,114 @@ def listCheck2D(cell, multilist):
 
 #called after map topic is published.
 #This fucntion goes to the closest unexplored area.
+# @return True if we have completed the map
 def captainKirk():
+	"""Boldly goes where no man has gone before"""
+	distances = list() # list of float distances
+	centroids = list() # list of np 2-d arrays [x,y] world coordinates
+	minDistance = 99999
+	closestEdge = -1
+	centroidIndex = 0
 
 
+	# runs through and calculates straighline lengths for all of them
+	for i,edge in enumerate(edgelist):
+		# calculates straighline lengths for all of them
+		start = edge[0].point
+		end = edge[len(edge)-1].point
+		width = math.sqrt(pow(end.x-start.x,2)+pow(end.y-start.y,2))
+		print "edge %i, width %d" % (i, width)
+		
+		# filters out the edges which are smaller than the robot
+		if width <= 0.3556:
+			#TODO need to add another filter to try running an astar path to that point
+			edgelist.remove(edge)
+		else:
+			# we assume all edges are concave away from robot - otherwise we could pick unknown space
+			
+			#TODO Instead of just going to center of the straighline, we could run rdp on it
+			# first, and then find the middle waypoint. That would fix the curve issue
+			thing = int(math.ceil(len(edge)/2))
+			point = Point()
+			point.x = edge[thing].point.x
+			point.y = edge[thing].point.y
 
 
-	#lab4.publishObstacles(obstacles,resolution)
+			#calculate vector between start and end of edge
+			# vector = np.array([(end.x-start.x) + end.x, (end.y-start.y) + end.y])
+			# normalized = vector/np.linalg.norm(vector)
 
-	return True
+			# #calculate the x,y along that vector that gets us the midpoint
+			# centroid = (0.5*width)*normalized
+			# centroid[0] += start.x
+			# centroid[1] += start.y
+			# point = Point()
+			# point.x = centroid[0]
+			# point.y = centroid[1]
 
+			robotX = pose.position.x
+			robotY = pose.position.y
+
+			# calculate straightline distance to the center of this edge from robot
+			distance = math.sqrt(pow(point.x-robotX,2)+pow(point.y-robotY,2))
+
+			#check if this is the shortest distance
+			if distance < minDistance:
+				minDistance = distance #update min distance
+				closestEdge = centroidIndex # save which edge is best
+				centroidIndex += centroidIndex
+			distances.append(distance) # so the distances correspond to index of edgelist
+			centroids.append(point)
+	#TODO catch if we didn't find a closest edge index
+
+	print "The closest edge index: %i" % centroidIndex
+	# checks if we still have any left - otherwise, notify the makers
+	if len(edgelist) > 0:
+		# chooses the one with the least cost - probably just straightline distance
+			#in the future, we could run Astar on all of them and choose the one with best path
+			# or have a history which picks the biggest one eventually
+		orientation = pose.orientation
+		#publish goal to topic to move the robot
+		wayPose = PoseStamped()
+		wayPose.pose.position.x = centroids[centroidIndex].x
+		wayPose.pose.position.y = centroids[centroidIndex].y
+		wayPose.pose.position.z = 0
+		wayPose.pose.orientation = orientation
+
+		global spinDone
+		spinDone = False
+		goalPub.publish(wayPose)
+		# sends that as a goal to astar, lets robot move there and report it is done the move
+		print "waiting for robot to move"
+		waitForRobotToMove()
+		return False
+	
+	# there are no more valid edges, 
+	else:
+		print "No more valid edges"
+		return True
+
+def waitForRobotToMove():
+	global navDone
+	while (not rospy.is_shutdown() and not navDone):
+		rospy.sleep(0.1)
+	navDone = False
+
+def waitForRobotToSpin():
+	global spinDone
+	while (not rospy.is_shutdown() and not spinDone):
+		rospy.sleep(0.1)
+	spinDone = False
 
 #I think this guy will just spin.
 def scotty():
+	global spinDone
+	spinDone = False
+	spin_pub.publish(True)
 
+	print "Waiting for robot to finish spinning"
+	waitForRobotToSpin()
+	print "Spinning complete"
 	return 0
 	
 
@@ -189,7 +287,111 @@ def publishCells(grid):
 				cells.cells.append(point)
 	pub.publish(cells)           
 
+#keeps track of current location and orientation
+def tCallback(event):
+    global pose
+    global theta
 
+    odom_list.waitForTransform('map', 'base_footprint', rospy.Time(0), rospy.Duration(1.0))
+    (position, orientation) = odom_list.lookupTransform('map','base_footprint', rospy.Time(0))
+    pose.position.x=position[0]
+    pose.position.y=position[1]
+
+    odomW = orientation
+    q = [odomW[0], odomW[1], odomW[2], odomW[3]]
+    roll, pitch, yaw = euler_from_quaternion(q)
+    #convert yaw to degrees
+    pose.orientation.z = yaw
+    theta = math.degrees(yaw)
+
+def spinStatusCallback(status):
+    print "spinStatusCallback"
+    global spinDone
+    spinDone = True
+
+def navStatusCallback(status):
+    print "navStatusCallback"
+    global navDone
+    navDone = True
+
+
+
+
+def expandObs(athingamabob):
+	global pub_obs
+	global G
+	print "expanding nodes"
+	numberOfNodesExpanded = 0
+	robotSize = .25
+	obstacles = list()
+	map_obs = list()
+	map_obs = (node for node in G if node.val > 0)
+	for obsNode in map_obs:
+		obsx = obsNode.point.x
+		obsy = obsNode.point.y
+
+		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
+			try:
+				if(isInMapXY(obsx + distance*resolution, obsy)):
+					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
+					east = G[eastindex]
+					if(east.weight < obsNode.val):
+						east.weight = obsNode.val
+					obstacles.append(east)
+				if(isInMapXY(obsx - distance*resolution, obsy)):
+					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
+					west = G[westindex]
+					if(west.weight < obsNode.val):
+						west.weight = obsNode.val
+					obstacles.append(west)
+				if(isInMapXY(obsx,obsy + distance*resolution)):
+					northindex =  getIndexFromWorldPoint(obsx,obsy + distance*resolution)
+					north = G[northindex]
+					if(north.weight < obsNode.val):
+						north.weight = obsNode.val
+					obstacles.append(north)
+				if(isInMapXY(obsx,obsy - distance*resolution)):
+					southindex =  getIndexFromWorldPoint(obsx,obsy - distance*resolution)
+					south = G[southindex]
+					if(south.weight < obsNode.val):
+						south.weight = obsNode.val
+					obstacles.append(south)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+
+				if(isInMapXY(obsx+distance*resolution,obsy + distance*resolution)):
+					northeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy + distance*resolution)
+					northeast = G[northeastindex]
+					if(northeast.weight < obsNode.val):
+						northeast.weight = obsNode.val
+					obstacles.append(northeast)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx-distance*resolution,obsy + distance*resolution)):
+					northwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy + distance*resolution)
+					northwest = G[northwestindex]
+					if(northwest.weight < obsNode.val):
+						northwest.weight = obsNode.val
+					obstacles.append(northwest)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx+distance*resolution,obsy - distance*resolution)):
+					southeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy - distance*resolution)
+					southeast = G[southeastindex]
+					if(southeast.weight < obsNode.val):
+						southeast.weight = obsNode.val
+					obstacles.append(southeast)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+				if(isInMapXY(obsx-distance*resolution,obsy - distance*resolution)):
+					southwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy - distance*resolution)
+					southwest = G[southwestindex]
+					if(southwest.weight < obsNode.val):
+						southwest.weight = obsNode.val
+					obstacles.append(southwest)
+					numberOfNodesExpanded = numberOfNodesExpanded + 1
+
+			except IndexError:
+				pass
+
+	publishObstacles(obstacles, resolution)
+	return G
 
 
 
@@ -198,30 +400,55 @@ def publishCells(grid):
 #calls boldly go, 
 #looks around again to see if we can call boldly go again
 def run():
+	global G
+	rospy.init_node('lab5')
+
 	global mapData
 	global width
 	width = 0
 	global height
 	global pub_frontier
-	map_sub = rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, mapCallBack)
+	map_sub = rospy.Subscriber('/map', OccupancyGrid, mapCallBack)
 
 	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
 
+	global goalPub #publishing the goal to astar
+	goalPub = rospy.Publisher('goal_pose', PoseStamped, queue_size=1)
 
+	global pose
+	global odom_list
+	pose = Pose()
+	rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
+	odom_list = tf.TransformListener() #listner for robot location
 
-	rospy.init_node('lab5')
+	global spin_pub
+	spin_pub = rospy.Publisher('spin_me', Bool, queue_size=1)
+
+	# this is for spinning
+	global spinDone
+	spinDone = False
+	move_status_sub = rospy.Subscriber('/spin_done', Bool, spinStatusCallback)
+
+	global navDone
+	navDone = False
+	nav_status_sub = rospy.Subscriber('nav_done', Bool, navStatusCallback)
+
+	# wait a second for publisher, subscribers, and TF
+	rospy.sleep(2)
 	
 	mapcomplete = False
 
 
-	while not width:
+	while not width and not rospy.is_shutdown():
+		rospy.sleep(0.1)
 		pass
-	G = lab4.initMap(mapgrid)
+
 	while (not mapcomplete and not rospy.is_shutdown()):
 		scotty()
+		G = lab4.initMap(mapgrid)
 		spock(G)
 		mapcomplete = captainKirk()
-		scotty()
+		#scotty()
 
 
 

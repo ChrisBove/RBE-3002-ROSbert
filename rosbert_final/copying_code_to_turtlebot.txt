@@ -1,0 +1,6 @@
+
+rbhome
+scp -r rosbert_final hulk@192.168.1.101:/home/hulk/
+
+on the turtebot, cd to rosbert_final/scripts
+then python away...

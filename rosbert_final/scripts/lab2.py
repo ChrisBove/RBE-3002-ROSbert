@@ -29,7 +29,7 @@ def navToPose(goal):
     """Drive to a goal subscribed to from /move_base_simple/goal"""
     status = Bool()
     status = False
-    status_pub.publish(status)
+    #status_pub.publish(status)
     #compute angle required to make straight-line move to desired pose
     global xPosition
     global yPosition
@@ -67,8 +67,8 @@ def navToPose(goal):
     print "spin!" #spin to final angle 
     rotate(desiredT)
     print "done"
-    status = True
-    status_pub.publish(status)
+    publishTwist(0, 0)
+    status_pub.publish(True)
 
 
 
@@ -117,7 +117,6 @@ def driveStraight(speed, distance):
             publishTwist(speed, 0)
             rospy.sleep(0.15)
 
-
 def driveSmooth(speed, distance):
     """This function accepts a speed and a distance for the robot to move in a smoothed straight line."""
     driveStraight(speed, distance)
@@ -136,7 +135,7 @@ def rotate(angle):
     # calculate error
     error = angle-math.degrees(pose.orientation.z)
     #determine which way to turn based on the error
-    angularZ = 0.75 # velocity for turnning
+    angularZ = 0.6 # velocity for turnning
     # turn CCW if the error is positive, CW if negative
     if(error < 0):
         angularZ *= -1.0 # flip velocity
@@ -168,8 +167,7 @@ def rotate(angle):
         error = angle-math.degrees(pose.orientation.z) #recalc error
         rospy.sleep(0.05)
     #once finished, stop
-    vel.angular.z = 0.0
-    pub.publish(vel)
+    publishTwist(0, 0)
 
 #This function is duplicated, not good practice, but rotates the robot by its local frame
 def rotateLocal(angle):
@@ -202,7 +200,7 @@ def rotateLocal(angle):
     #calc error
     error = angle-(startingAngle - math.degrees(pose.orientation.z))
     #determine which way to turn based on the angle
-    angularZ = -0.75
+    angularZ = -0.6
     # turn positive in situations where the angles and errors are in certain ranges
     #to optimize which direction we turn
     hackyError = endingAngle - startingAngle
@@ -233,8 +231,7 @@ def rotateLocal(angle):
         pub.publish(vel)
         error = endingAngle - math.degrees(pose.orientation.z)
         rospy.sleep(0.05)
-    vel.angular.z = 0.0
-    pub.publish(vel)
+    publishTwist(0, 0)
 
 def executeTrajectory():
     """This function sequentially calls methods to perform a trajectory."""
@@ -267,7 +264,7 @@ def readBumper(msg):
     # if center button is pressed, execute the trajectory
     if ((msg.state == 1) and (msg.bumper == 1)):
         print "Bumper pressed!"
-        executeTrajectory()
+        #executeTrajectory()
 
 #keeps track of current location and orientation
 def tCallback(event):
@@ -291,6 +288,14 @@ def tCallback(event):
     pose.orientation.z = yaw
     theta = math.degrees(yaw)
 
+def spinCallback(msg):
+    print "spinning!!!"
+    rotateLocal(120)
+    rotateLocal(120)
+    rotateLocal(120)
+    print "done spinning"
+    spin_status_pub.publish(True)
+
 # This is the program's main function
 if __name__ == '__main__':
     rospy.init_node('cbove_lab2')
@@ -303,6 +308,8 @@ if __name__ == '__main__':
     bumper_sub = rospy.Subscriber('/mobile_base/events/bumper', BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
     goal_sub = rospy.Subscriber('/clicked_pose', PoseStamped, navToPose, queue_size=1) #callback for setting pose goal
     status_pub = rospy.Publisher('/moves_done', Bool, None, queue_size=1) #publishes when robot is done moving
+    spin_pub = rospy.Subscriber('/spin_me', Bool, spinCallback, queue_size=1)
+    spin_status_pub = rospy.Publisher('/spin_done', Bool, None, queue_size=1)
 
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
@@ -312,7 +319,7 @@ if __name__ == '__main__':
 
     print "Starting Lab 2"
 
-    spinWheels(0,0,0.5) #make sure robot is in a stopped state
+    publishTwist(0, 0) #make sure robot is in a stopped state
     print "stopped the robot"
 
     while not rospy.is_shutdown():
