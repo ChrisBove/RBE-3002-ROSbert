@@ -198,8 +198,8 @@ def captainKirk():
 		orientation = pose.orientation
 		#publish goal to topic to move the robot
 		wayPose = PoseStamped()
-		wayPose.pose.position.x = centroids[closestEdge].x
-		wayPose.pose.position.y = centroids[closestEdge].y
+		wayPose.pose.position.x = centroids[centroidIndex].x
+		wayPose.pose.position.y = centroids[centroidIndex].y
 		wayPose.pose.position.z = 0
 		wayPose.pose.orientation = orientation
 

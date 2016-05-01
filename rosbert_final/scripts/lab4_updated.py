@@ -353,7 +353,7 @@ def initMap( _mapGrid):
 		frontier.append(0)
 	
 	#TODO Fix expand obs 
-	#expandObs(newMap)
+	expandObs(newMap)
 	
 	print "map created" 
 	return newMap
