@@ -375,14 +375,14 @@ def adjCellCheck(current):
 		if(currCell.weight != 100) and (currCell.weight != -1):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
-	publishTraversal(traversal)
+	#publishTraversal(traversal)
 						
 
 def evalNeighbor(nNode, current): 
 	if(nNode not in closedSet):  # check if neighbor node is in closedSet - it has already been traveled to
 		tentative = current.g + 1.4*resolution  #checks what the potential cost to reach the node is 
 		frontier.append(nNode)   
-		publishFrontier(frontier)  # for rviz - publish node to frontier 
+		#publishFrontier(frontier)  # for rviz - publish node to frontier 
 		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
 			nNode.huer = heuristic(nNode.index) # calcute huristic of current node. 
 			nNode.g = tentative # set cost to reach node 
