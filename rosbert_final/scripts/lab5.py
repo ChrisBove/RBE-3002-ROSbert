@@ -152,9 +152,10 @@ def captainKirk():
 		start = edge[0].point
 		end = edge[len(edge)-1].point
 		width = math.sqrt(pow(end.x-start.x,2)+pow(end.y-start.y,2))
+		print "edge %i, width %d" % (i, width)
 		
 		# filters out the edges which are smaller than the robot
-		if width <= 0.3:
+		if width <= 0.3556:
 			#TODO need to add another filter to try running an astar path to that point
 			edgelist.remove(edge)
 		else:
