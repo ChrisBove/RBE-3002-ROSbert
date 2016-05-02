@@ -268,7 +268,10 @@ def expandObs(newMap):
 	robotSize = .25
 	obstacles = list()
 	map_obs = list()
-	map_obs = (node for node in newMap if node.val > 30)
+	#map_obs = (node for node in newMap if node.val > 30)
+	for node in newMap:
+		if node.val > 40:
+			map_obs.append(node)
 	for obsNode in map_obs:
 		obsx = obsNode.point.x
 		obsy = obsNode.point.y
@@ -334,7 +337,8 @@ def expandObs(newMap):
 				pass
 
 	publishObstacles(obstacles, resolution)
-
+	print "=================Num obs: %d Num found: %d" %(len(map_obs),numberOfNodesExpanded)
+	return newMap
 
 #takes map data and converts it into nodes
 def initMap( _mapGrid):
@@ -353,7 +357,8 @@ def initMap( _mapGrid):
 		frontier.append(0)
 	
 	#TODO Fix expand obs 
-	expandObs(newMap)
+	expandedMap = list()
+	#expandedMap = expandObs(newMap)
 	
 	print "map created" 
 	return newMap
@@ -372,7 +377,7 @@ def adjCellCheck(current):
 	adjList =  findNeighbor(current.index,False) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.weight != 100) and (currCell.weight != -1):   #checks if cell is reachable  
+		if(currCell.weight != -1)and(currCell.weight != 100):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
 	#publishTraversal(traversal)
@@ -416,7 +421,8 @@ def finalCheck(cIndex, fIndex):
 		return False
 
 def aStar(aMap, goalNode):
-	
+	global noroutefound
+	noroutefound = False
 	global G
 	G = aMap
 
@@ -459,7 +465,7 @@ def aStar(aMap, goalNode):
 			pass
  	
 	print "No route to goal"
-			
+	noroutefound = True
 # -----------------------------------------------------------------------------------------------------
 
 
@@ -823,8 +829,8 @@ def lab4Init():
 	moveDone = Bool()
 
 
-	rospy.init_node('lab3')
-	sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+	rospy.init_node('RosBert NavStack')
+	sub = rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, mapCallBack)#changed from /map
 	pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
 	pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
 	pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
@@ -919,6 +925,7 @@ def run():
     global pub_obs
     global moveDone
     moveDone = Bool()
+    global noroutefound
 
 
     rospy.init_node('lab3')
@@ -937,7 +944,7 @@ def run():
     move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
 
     nav_complete_pub = rospy.Publisher('nav_done', Bool, None, queue_size=1)
-
+    nav_failed_pub = rospy.Publisher('nav_failed',Bool,None, queue_size=1)
     rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
     
     odom_list = tf.TransformListener() #listner for robot location
@@ -951,6 +958,9 @@ def run():
             moveDone = False
             newMap = initMap(mapgrid)
             path = aStar(newMap, goalIndex)
+            if noroutefound:
+            	nav_failed_pub.publish(True)
+            	continue
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
