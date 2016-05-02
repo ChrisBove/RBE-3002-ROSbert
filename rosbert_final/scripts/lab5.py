@@ -48,14 +48,15 @@ def mapCallBack(data):
 
 
 #takes map data and converts it into nodes, calls linkMap function
-def initMap(): 
+def initMap(G): 
 	print "creating map" 
-	global frontier
-	global G
+	#global frontier
 	for i in range(0, width*height):
 		node = aNode(i,mapData[i],heuristic(i),0.0)
 		G.append(node) 
-	expandObs(G)
+	#expandObs(G)
+
+	return G
 	print "map created" 
 
 #finds the frontiers on the map. puts them in a list of objects?
@@ -76,10 +77,10 @@ def spock(G):
 	# 	if cell.weight == -1:
 	# 		unidentifiedCells.append(cell)	#cells that haven't been seen
 	for cell in G:
-		if cell.weight <= 40 and cell.weight >= 0:#cells that aren't obstacles:
+		if cell.weight <= 80 and cell.weight >= 0:#cells that aren't obstacles:
 			openCells.append(cell)
 	for cell in G:
-		if cell.weight > 40:
+		if cell.weight > 80:
 			obstacles.append(cell) 			#cells that are obstacles
 
 	#print "Num unidentified: %d" % len(unidentifiedCells)
@@ -317,98 +318,21 @@ def navStatusCallback(status):
 
 
 
-def expandObs(athingamabob):
-	global pub_obs
-	global G
-	print "expanding nodes"
-	numberOfNodesExpanded = 0
-	robotSize = .25
-	obstacles = list()
-	map_obs = list()
-	map_obs = (node for node in G if node.val > 0)
-	for obsNode in map_obs:
-		obsx = obsNode.point.x
-		obsy = obsNode.point.y
-
-		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
-			try:
-				if(isInMapXY(obsx + distance*resolution, obsy)):
-					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
-					east = G[eastindex]
-					if(east.weight < obsNode.val):
-						east.weight = obsNode.val
-					obstacles.append(east)
-				if(isInMapXY(obsx - distance*resolution, obsy)):
-					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
-					west = G[westindex]
-					if(west.weight < obsNode.val):
-						west.weight = obsNode.val
-					obstacles.append(west)
-				if(isInMapXY(obsx,obsy + distance*resolution)):
-					northindex =  getIndexFromWorldPoint(obsx,obsy + distance*resolution)
-					north = G[northindex]
-					if(north.weight < obsNode.val):
-						north.weight = obsNode.val
-					obstacles.append(north)
-				if(isInMapXY(obsx,obsy - distance*resolution)):
-					southindex =  getIndexFromWorldPoint(obsx,obsy - distance*resolution)
-					south = G[southindex]
-					if(south.weight < obsNode.val):
-						south.weight = obsNode.val
-					obstacles.append(south)
-					numberOfNodesExpanded = numberOfNodesExpanded + 1
-
-				if(isInMapXY(obsx+distance*resolution,obsy + distance*resolution)):
-					northeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy + distance*resolution)
-					northeast = G[northeastindex]
-					if(northeast.weight < obsNode.val):
-						northeast.weight = obsNode.val
-					obstacles.append(northeast)
-					numberOfNodesExpanded = numberOfNodesExpanded + 1
-				if(isInMapXY(obsx-distance*resolution,obsy + distance*resolution)):
-					northwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy + distance*resolution)
-					northwest = G[northwestindex]
-					if(northwest.weight < obsNode.val):
-						northwest.weight = obsNode.val
-					obstacles.append(northwest)
-					numberOfNodesExpanded = numberOfNodesExpanded + 1
-				if(isInMapXY(obsx+distance*resolution,obsy - distance*resolution)):
-					southeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy - distance*resolution)
-					southeast = G[southeastindex]
-					if(southeast.weight < obsNode.val):
-						southeast.weight = obsNode.val
-					obstacles.append(southeast)
-					numberOfNodesExpanded = numberOfNodesExpanded + 1
-				if(isInMapXY(obsx-distance*resolution,obsy - distance*resolution)):
-					southwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy - distance*resolution)
-					southwest = G[southwestindex]
-					if(southwest.weight < obsNode.val):
-						southwest.weight = obsNode.val
-					obstacles.append(southwest)
-					numberOfNodesExpanded = numberOfNodesExpanded + 1
-
-			except IndexError:
-				pass
-
-	publishObstacles(obstacles, resolution)
-	return G
-
-
 
 #Main handler of the project
 #this function looks around, 
 #calls boldly go, 
 #looks around again to see if we can call boldly go again
 def run():
-	global G
 	rospy.init_node('lab5')
 
 	global mapData
+	global mapgrid
 	global width
 	width = 0
 	global height
 	global pub_frontier
-	map_sub = rospy.Subscriber('/map', OccupancyGrid, mapCallBack)
+	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, mapCallBack)
 
 	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
 
@@ -445,7 +369,7 @@ def run():
 
 	while (not mapcomplete and not rospy.is_shutdown()):
 		scotty()
-		G = lab4.initMap(mapgrid)
+		G = lab4.initMap(mapgrid)#lab4.initMap(mapgrid)
 		spock(G)
 		mapcomplete = captainKirk()
 		#scotty()
