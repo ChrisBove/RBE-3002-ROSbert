@@ -153,12 +153,13 @@ def captainKirk():
 		start = edge[0].point
 		end = edge[len(edge)-1].point
 		width = math.sqrt(pow(end.x-start.x,2)+pow(end.y-start.y,2))
-		print "edge %i, width %d" % (i, width)
-		print "startX %d, startY %d" % (start.x, start.y)
-		print "end X %d, end Y %d" % (end.x, end.y)
+		#print "edge %i, width %d" % (i, width)
+		#print "startX %d, startY %d" % (start.x, start.y)
+		#print "end X %d, end Y %d" % (end.x, end.y)
 		
 		# filters out the edges which are smaller than the robot
-		if width <= 0.3556:
+		#if width <= 0.3556:
+		if len(edge) < 0.3556/(resolution):
 			#TODO need to add another filter to try running an astar path to that point
 			edgelist.remove(edge)
 		else:
@@ -199,38 +200,111 @@ def captainKirk():
 			centroids.append(point)
 	#TODO catch if we didn't find a closest edge index
 
-	print "The closest edge index: %i" % centroidIndex
+	print "The closest edge index: %i" % closestEdge
 	# checks if we still have any left - otherwise, notify the makers
-	if len(edgelist) > 0:
+	while len(edgelist) > 0:
 		# chooses the one with the least cost - probably just straightline distance
 			#in the future, we could run Astar on all of them and choose the one with best path
 			# or have a history which picks the biggest one eventually
 		orientation = pose.orientation
 		#publish goal to topic to move the robot
 		wayPose = PoseStamped()
-		wayPose.pose.position.x = centroids[centroidIndex].x
-		wayPose.pose.position.y = centroids[centroidIndex].y
+		wayPose.pose.position.x = centroids[closestEdge].x
+		wayPose.pose.position.y = centroids[closestEdge].y
 		wayPose.pose.position.z = 0
 		wayPose.pose.orientation = orientation
 
 		global spinDone
 		spinDone = False
+		global navCallbackServiced
+		navCallbackServiced = False
 		goalPub.publish(wayPose)
 		# sends that as a goal to astar, lets robot move there and report it is done the move
-		print "waiting for robot to move"
-		waitForRobotToMove()
-		return False
+		print "waiting for astar path"
+		waitForValidPath()
+		if navFailed:
+			edgelist.remove(centroidIndex)
+
+			# check list again and pick closest one
+			distances = list() # list of float distances
+			centroids = list() # list of np 2-d arrays [x,y] world coordinates
+			minDistance = 99999
+			closestEdge = -1
+			centroidIndex = 0
+			# runs through and calculates straighline lengths for all of them
+			for i,edge in enumerate(edgelist):
+				# calculates straighline lengths for all of them
+				start = edge[0].point
+				end = edge[len(edge)-1].point
+				width = math.sqrt(pow(end.x-start.x,2)+pow(end.y-start.y,2))
+				#print "edge %i, width %d" % (i, width)
+				#print "startX %d, startY %d" % (start.x, start.y)
+				#print "end X %d, end Y %d" % (end.x, end.y)
+				
+				# filters out the edges which are smaller than the robot
+				#if width <= 0.3556:
+				if len(edge) < 0.3556/(resolution):
+					#TODO need to add another filter to try running an astar path to that point
+					edgelist.remove(edge)
+				else:
+					# we assume all edges are concave away from robot - otherwise we could pick unknown space
+					
+					#TODO Instead of just going to center of the straighline, we could run rdp on it
+					# first, and then find the middle waypoint. That would fix the curve issue
+					thing = int(math.ceil(len(edge)/2))
+					point = Point()
+					point.x = edge[thing].point.x
+					point.y = edge[thing].point.y
+
+
+					#calculate vector between start and end of edge
+					# vector = np.array([(end.x-start.x) + end.x, (end.y-start.y) + end.y])
+					# normalized = vector/np.linalg.norm(vector)
+
+					# #calculate the x,y along that vector that gets us the midpoint
+					# centroid = (0.5*width)*normalized
+					# centroid[0] += start.x
+					# centroid[1] += start.y
+					# point = Point()
+					# point.x = centroid[0]
+					# point.y = centroid[1]
+
+					robotX = pose.position.x
+					robotY = pose.position.y
+
+					# calculate straightline distance to the center of this edge from robot
+					distance = math.sqrt(pow(point.x-robotX,2)+pow(point.y-robotY,2))
+
+					#check if this is the shortest distance
+					if distance < minDistance:
+						minDistance = distance #update min distance
+						closestEdge = centroidIndex # save which edge is best
+						centroidIndex += centroidIndex
+					distances.append(distance) # so the distances correspond to index of edgelist
+					centroids.append(point)
+
+			continue
+		else:
+			print "waiting for robot to move"
+			waitForRobotToMove()
+
+			return False
 	
-	# there are no more valid edges, 
-	else:
-		print "No more valid edges"
-		return True
+	
+	print "No more valid edges"
+	return True
 
 def waitForRobotToMove():
 	global navDone
 	while (not rospy.is_shutdown() and not navDone):
 		rospy.sleep(0.1)
 	navDone = False
+
+def waitForValidPath():
+	global navCallbackServiced
+	while (not rospy.is_shutdown() and not navCallbackServiced):
+		rospy.sleep(0.1)
+	navCallbackServiced = False
 
 def waitForRobotToSpin():
 	global spinDone
@@ -319,8 +393,9 @@ def navStatusCallback(status):
 
 def navFailedCallback(status):
     print "navFailed, better choose a better point"
-    global navFailed
-    navFailed = True
+    global navFailed, navCallbackServiced
+    navFailed = status
+    navCallbackServiced = True
 
 
 
@@ -360,6 +435,8 @@ def run():
 	move_status_sub = rospy.Subscriber('/spin_done', Bool, spinStatusCallback)
 
 	global navDone
+	global navCallbackServiced
+	navCallbackServiced = False
 	navDone = False
 	nav_status_sub = rospy.Subscriber('nav_done', Bool, navStatusCallback)
 	nav_failed_sub = rospy.Subscriber('nav_failed', Bool, navFailedCallback)

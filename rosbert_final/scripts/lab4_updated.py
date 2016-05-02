@@ -377,7 +377,7 @@ def adjCellCheck(current):
 	adjList =  findNeighbor(current.index,False) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.weight != -1)and(currCell.weight != 100):   #checks if cell is reachable  
+		if(currCell.weight != -1)and(currCell.weight <= 80):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
 	#publishTraversal(traversal)
@@ -385,7 +385,7 @@ def adjCellCheck(current):
 
 def evalNeighbor(nNode, current): 
 	if(nNode not in closedSet):  # check if neighbor node is in closedSet - it has already been traveled to
-		tentative = current.g + 1.4*resolution  #checks what the potential cost to reach the node is 
+		tentative = current.g + 1.4*resolution + current.weight #checks what the potential cost to reach the node is 
 		frontier.append(nNode)   
 		#publishFrontier(frontier)  # for rviz - publish node to frontier 
 		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
@@ -960,13 +960,17 @@ def run():
             path = aStar(newMap, goalIndex)
             if noroutefound:
             	nav_failed_pub.publish(True)
+            	goalRead = False
             	continue
+            else:
+            	nav_failed_pub.publish(False)
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
             waypoints = getDouglasWaypoints(path)
             waypoints.pop() # pop off these incorrect waypoints		
             waypoints.pop()
+            waypoints.reverse()
             publishWaypoints(waypoints)#publish waypoints
             print "Finished... beginning robot movements"
             #for each waypoint
