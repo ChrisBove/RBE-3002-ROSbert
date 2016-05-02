@@ -154,6 +154,8 @@ def captainKirk():
 		end = edge[len(edge)-1].point
 		width = math.sqrt(pow(end.x-start.x,2)+pow(end.y-start.y,2))
 		print "edge %i, width %d" % (i, width)
+		print "startX %d, startY %d" % (start.x, start.y)
+		print "end X %d, end Y %d" % (end.x, end.y)
 		
 		# filters out the edges which are smaller than the robot
 		if width <= 0.3556:
