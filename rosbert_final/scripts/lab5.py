@@ -315,6 +315,10 @@ def navStatusCallback(status):
     global navDone
     navDone = True
 
+def navFailedCallback(status):
+    print "navFailed, better choose a better point"
+    global navFailed
+    navFailed = True
 
 
 
@@ -356,7 +360,7 @@ def run():
 	global navDone
 	navDone = False
 	nav_status_sub = rospy.Subscriber('nav_done', Bool, navStatusCallback)
-
+	nav_failed_sub = rospy.Subscriber('nav_failed', Bool, navFailedCallback)
 	# wait a second for publisher, subscribers, and TF
 	rospy.sleep(2)
 	
