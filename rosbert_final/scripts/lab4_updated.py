@@ -357,7 +357,7 @@ def initMap( _mapGrid):
 		frontier.append(0)
 	
 	#TODO Fix expand obs 
-	expandedMap = list()
+	#expandedMap = list()
 	#expandedMap = expandObs(newMap)
 	
 	print "map created" 
@@ -377,10 +377,10 @@ def adjCellCheck(current):
 	adjList =  findNeighbor(current.index,False) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.weight != -1)and(currCell.weight <= 80):   #checks if cell is reachable  
+		if (currCell.weight != -1) and (currCell.weight <= 93):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
-	#publishTraversal(traversal)
+	publishTraversal(traversal)
 						
 
 def evalNeighbor(nNode, current): 
@@ -929,7 +929,7 @@ def run():
 
 
     rospy.init_node('lab3')
-    sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+    sub = rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, mapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)

@@ -214,7 +214,7 @@ def captainKirk():
 		wayPose.pose.position.z = 0
 		wayPose.pose.orientation = orientation
 
-		global spinDone
+		global spinDone, navFailed
 		spinDone = False
 		global navCallbackServiced
 		navCallbackServiced = False
@@ -223,7 +223,8 @@ def captainKirk():
 		print "waiting for astar path"
 		waitForValidPath()
 		if navFailed:
-			edgelist.remove(centroidIndex)
+			print "Our nav failed..."
+			edgelist.remove(edgelist[closestEdge])
 
 			# check list again and pick closest one
 			distances = list() # list of float distances
