@@ -279,7 +279,7 @@ def expandObs(_inputmap):
 		obsx = obsNode.point.x
 		obsy = obsNode.point.y
 
-		for distance in range(0, 4):# math.trunc(robotSize/resolution)):
+		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
 			try:
 				if(isInMapXY(obsx + distance*resolution, obsy)):
 					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)

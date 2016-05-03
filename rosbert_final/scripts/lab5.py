@@ -75,7 +75,7 @@ def obstacleExpansion(G):
 		obsx = obsNode.point.x
 		obsy = obsNode.point.y
 
-		for distance in range(0, 4):# math.trunc(robotSize/resolution)):
+		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
 			try:
 				if(isInMapXY(obsx + distance*resolution, obsy)):
 					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
@@ -187,7 +187,7 @@ def spock(G):
 	frontiernodes = list()
 	
 	# for cell in G:
-	# 	if cell.weight == -1:
+	# 	if cell.weight == -1: 
 	# 		unidentifiedCells.append(cell)	#cells that haven't been seen
 	for cell in G:
 		if cell.weight <= 80 and cell.weight >= 0:#cells that aren't obstacles:
@@ -297,15 +297,18 @@ def captainKirk():
 		start = edge[0].point
 		end = edge[len(edge)-1].point
 		width = math.sqrt(pow(end.x-start.x,2)+pow(end.y-start.y,2))
-		#print "edge %i, width %d" % (i, width)
-		#print "startX %d, startY %d" % (start.x, start.y)
-		#print "end X %d, end Y %d" % (end.x, end.y)
+		print "edge %i, width %d" % (i, width)
+		print "startX %d, startY %d" % (start.x, start.y)
+		print "end X %d, end Y %d" % (end.x, end.y)
 		
 		# filters out the edges which are smaller than the robot
 		#if width <= 0.3556:
-		if len(edge) < 0.3556/(resolution):
+		if len(edge) < (0.3556/(resolution))/2.0:
 			#TODO need to add another filter to try running an astar path to that point
 			edgelist.remove(edge)
+			if len(edgelist) == 0:
+
+				break
 		else:
 			# we assume all edges are concave away from robot - otherwise we could pick unknown space
 			
@@ -334,6 +337,7 @@ def captainKirk():
 
 			# calculate straightline distance to the center of this edge from robot
 			distance = math.sqrt(pow(point.x-robotX,2)+pow(point.y-robotY,2))
+			print "Distance: %f minDistance: %f" % (distance, minDistance)
 
 			#check if this is the shortest distance
 			if distance < minDistance:
@@ -346,7 +350,7 @@ def captainKirk():
 
 	print "The closest edge index: %i" % closestEdge
 	# checks if we still have any left - otherwise, notify the makers
-	while len(edgelist) > 0:
+	while len(edgelist) > 0 and closestEdge != -1:
 		# chooses the one with the least cost - probably just straightline distance
 			#in the future, we could run Astar on all of them and choose the one with best path
 			# or have a history which picks the biggest one eventually
@@ -603,6 +607,7 @@ def run():
 		pass
 
 	while (not mapcomplete and not rospy.is_shutdown()):
+		scotty()
 		scotty()
 		#map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, mapCallBack)
 		#G = initMap(mapgrid)#lab4.initMap(mapgrid)
