@@ -133,7 +133,38 @@ def listCheck2D(cell, multilist):
 			return True
 	else:
 		return False
+#returns in meters the point of the current index
+def getWorldPointFromIndex(index):
+	point=Point()
+	#print "GetX: %i" % getX(index)
+	point.x=(getX(index)*resolution)+offsetX + (.5 * resolution)
+	point.y=(getY(index)*resolution)+offsetY + (.5 * resolution)
+	point.z=0
+	return point
 
+# returns the index number given a point in the world
+def getIndexFromWorldPoint(x,y):
+	#calculate the index coordinates
+	indexX = int(((x-offsetX) - (.5*resolution))/resolution)
+	indexY = int(((y-offsetY) - (.5*resolution))/resolution)
+	
+	index = int (((indexY)*width) + indexX) 
+	return index
+
+
+
+#returns the x value of the index
+def getX(index):
+	adjusted = index + 1
+	if (adjusted % width) == 0:
+		return width - 1
+	else:
+		return (adjusted % width) - 1
+
+#returns the y value of the index
+def getY(index):
+	adjusted = index
+	return math.floor(adjusted/width)   
 
 #called after map topic is published.
 #This fucntion goes to the closest unexplored area.
@@ -455,6 +486,7 @@ def run():
 
 	while (not mapcomplete and not rospy.is_shutdown()):
 		scotty()
+		#map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, mapCallBack)
 		G = lab4.initMap(mapgrid)#lab4.initMap(mapgrid)
 		spock(G)
 		mapcomplete = captainKirk()

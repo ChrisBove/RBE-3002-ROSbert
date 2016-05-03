@@ -385,7 +385,7 @@ def adjCellCheck(current):
 
 def evalNeighbor(nNode, current): 
 	if(nNode not in closedSet):  # check if neighbor node is in closedSet - it has already been traveled to
-		tentative = current.g + 1.4*resolution + current.weight/10 #checks what the potential cost to reach the node is 
+		tentative = current.g + 1.4*resolution #+ current.weight/10 #checks what the potential cost to reach the node is 
 		frontier.append(nNode)   
 		#publishFrontier(frontier)  # for rviz - publish node to frontier 
 		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
@@ -963,7 +963,7 @@ def run():
                 print "no route found"
                 nav_failed_pub.publish(True)
                 goalRead = False
-                continue
+                break
             else:
                 print "route found"
                 nav_failed_pub.publish(False)
@@ -1011,7 +1011,7 @@ def run():
                     rospy.sleep(0.1)
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
-                break # just do this one waypoint
+                continue # just do this one waypoint
             nav_complete_pub.publish(True)    
             print "done robot movements"
             goalRead = False
