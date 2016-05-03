@@ -954,7 +954,7 @@ def run():
 
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
-        if goalRead:
+        while goalRead and not rospy.is_shutdown():
             print "goal read"
             moveDone = False
             newMap = initMap(mapgrid)
@@ -988,6 +988,7 @@ def run():
                 if (abs(goalX - waypt.x) <= resolution) and (abs(goalY - waypt.y) <= resolution):
                     print "This waypoint is the goal"
                     orientation = goalOrientation
+                    goalRead = False # after this one, stop doing this loop
                 #calculate end orientation for waypoint - perhaps the angle to the next one? or just our current heading?
                 else:
                     orientation = pose.orientation
@@ -1010,6 +1011,7 @@ def run():
                     rospy.sleep(0.1)
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
+                break # just do this one waypoint
             nav_complete_pub.publish(True)    
             print "done robot movements"
             goalRead = False
