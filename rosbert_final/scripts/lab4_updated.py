@@ -46,7 +46,8 @@ def mapCallBack(data):
     height = data.info.height
     offsetX = data.info.origin.position.x
     offsetY = data.info.origin.position.y
-    print data.info
+    #print data.info
+    print "map callback"
 
 def readStart(_startPos):
     global startRead
@@ -929,7 +930,7 @@ def run():
 
 
     rospy.init_node('lab3')
-    sub = rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, mapCallBack)
+    sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)#rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, mapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
@@ -1011,10 +1012,11 @@ def run():
                     rospy.sleep(0.1)
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
-                continue # just do this one waypoint
-            nav_complete_pub.publish(True)    
-            print "done robot movements"
-            goalRead = False
+                break # just do this one waypoint
+        print "publishing nav complete"
+        nav_complete_pub.publish(True)    
+        print "done robot movements"
+        goalRead = False
         rospy.sleep(2)  
         #print("Complete")
     

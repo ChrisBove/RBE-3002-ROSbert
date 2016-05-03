@@ -269,9 +269,9 @@ def captainKirk():
 				start = edge[0].point
 				end = edge[len(edge)-1].point
 				width = math.sqrt(pow(end.x-start.x,2)+pow(end.y-start.y,2))
-				#print "edge %i, width %d" % (i, width)
-				#print "startX %d, startY %d" % (start.x, start.y)
-				#print "end X %d, end Y %d" % (end.x, end.y)
+				print "edge %i, width %d" % (i, width)
+				print "startX %d, startY %d" % (start.x, start.y)
+				print "end X %d, end Y %d" % (end.x, end.y)
 				
 				# filters out the edges which are smaller than the robot
 				#if width <= 0.3556:
@@ -318,6 +318,7 @@ def captainKirk():
 			continue
 		else:
 			print "waiting for robot to move"
+			navDone = False
 			waitForRobotToMove()
 
 			return False
@@ -328,8 +329,10 @@ def captainKirk():
 
 def waitForRobotToMove():
 	global navDone
+	navDone = False
 	while (not rospy.is_shutdown() and not navDone):
 		pass
+	print "Robot has finished moving"
 	navDone = False
 
 def waitForValidPath():
@@ -447,7 +450,7 @@ def run():
 	width = 0
 	global height
 	global pub_frontier
-	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, mapCallBack)
+	map_sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)#rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, mapCallBack)
 
 	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
 
