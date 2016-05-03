@@ -46,7 +46,9 @@ def mapCallBack(data):
     height = data.info.height
     offsetX = data.info.origin.position.x
     offsetY = data.info.origin.position.y
-    print data.info
+
+    #print data.info
+    print "map callback"
 
 def readStart(_startPos):
     global startRead
@@ -148,6 +150,7 @@ def isInMap(point):
 
 		#checks if the passed point is in the map
 def isInMapXY(x, y):
+	return True
 	#catch if point is negative
 	if(x < 0 or y < 0):
 		return False
@@ -261,15 +264,15 @@ def findNeighbor(index, eightconnected):
 
 
 
-def expandObs(newMap):
+def expandObs(_inputmap):
 	global pub_obs
 	print "expanding nodes"
 	numberOfNodesExpanded = 0
 	robotSize = .25
 	obstacles = list()
 	map_obs = list()
-	#map_obs = (node for node in newMap if node.val > 30)
-	for node in newMap:
+	#map_obs = (node for node in _inputmap if node.val > 30)
+	for node in _inputmap:
 		if node.val > 40:
 			map_obs.append(node)
 	for obsNode in map_obs:
@@ -280,25 +283,25 @@ def expandObs(newMap):
 			try:
 				if(isInMapXY(obsx + distance*resolution, obsy)):
 					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
-					east = newMap[eastindex]
+					east = _inputmap[eastindex]
 					if(east.weight < obsNode.val):
 						east.weight = obsNode.val
 					obstacles.append(east)
 				if(isInMapXY(obsx - distance*resolution, obsy)):
 					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
-					west = newMap[westindex]
+					west = _inputmap[westindex]
 					if(west.weight < obsNode.val):
 						west.weight = obsNode.val
 					obstacles.append(west)
 				if(isInMapXY(obsx,obsy + distance*resolution)):
 					northindex =  getIndexFromWorldPoint(obsx,obsy + distance*resolution)
-					north = newMap[northindex]
+					north = _inputmap[northindex]
 					if(north.weight < obsNode.val):
 						north.weight = obsNode.val
 					obstacles.append(north)
 				if(isInMapXY(obsx,obsy - distance*resolution)):
 					southindex =  getIndexFromWorldPoint(obsx,obsy - distance*resolution)
-					south = newMap[southindex]
+					south = _inputmap[southindex]
 					if(south.weight < obsNode.val):
 						south.weight = obsNode.val
 					obstacles.append(south)
@@ -306,28 +309,28 @@ def expandObs(newMap):
 
 				if(isInMapXY(obsx+distance*resolution,obsy + distance*resolution)):
 					northeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy + distance*resolution)
-					northeast = newMap[northeastindex]
+					northeast = _inputmap[northeastindex]
 					if(northeast.weight < obsNode.val):
 						northeast.weight = obsNode.val
 					obstacles.append(northeast)
 					numberOfNodesExpanded = numberOfNodesExpanded + 1
 				if(isInMapXY(obsx-distance*resolution,obsy + distance*resolution)):
 					northwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy + distance*resolution)
-					northwest = newMap[northwestindex]
+					northwest = _inputmap[northwestindex]
 					if(northwest.weight < obsNode.val):
 						northwest.weight = obsNode.val
 					obstacles.append(northwest)
 					numberOfNodesExpanded = numberOfNodesExpanded + 1
 				if(isInMapXY(obsx+distance*resolution,obsy - distance*resolution)):
 					southeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy - distance*resolution)
-					southeast = newMap[southeastindex]
+					southeast = _inputmap[southeastindex]
 					if(southeast.weight < obsNode.val):
 						southeast.weight = obsNode.val
 					obstacles.append(southeast)
 					numberOfNodesExpanded = numberOfNodesExpanded + 1
 				if(isInMapXY(obsx-distance*resolution,obsy - distance*resolution)):
 					southwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy - distance*resolution)
-					southwest = newMap[southwestindex]
+					southwest = _inputmap[southwestindex]
 					if(southwest.weight < obsNode.val):
 						southwest.weight = obsNode.val
 					obstacles.append(southwest)
@@ -338,12 +341,12 @@ def expandObs(newMap):
 
 	publishObstacles(obstacles, resolution)
 	print "=================Num obs: %d Num found: %d" %(len(map_obs),numberOfNodesExpanded)
-	return newMap
+	return _inputmap
 
 #takes map data and converts it into nodes
 def initMap( _mapGrid):
 
-	mapCallBack(_mapGrid) 
+	#mapCallBack(_mapGrid) 
 	pubObInit()
 	newMap = list() 
 
@@ -358,10 +361,10 @@ def initMap( _mapGrid):
 	
 	#TODO Fix expand obs 
 	expandedMap = list()
-	#expandedMap = expandObs(newMap)
+	expandedMap = expandObs(newMap)
 	
 	print "map created" 
-	return newMap
+	return expandedMap
  
 def pubObInit(): 
 	global pub_obs
@@ -377,15 +380,15 @@ def adjCellCheck(current):
 	adjList =  findNeighbor(current.index,False) ## list of indexes of neighbor 
 	for index in adjList:
 		currCell = G[index] 
-		if(currCell.weight != -1)and(currCell.weight != 100):   #checks if cell is reachable  
+		if (currCell.weight != -1) and (currCell.weight <= 93):   #checks if cell is reachable  
 			evalNeighbor(currCell, current) # evaluates the neighbor 
 			traversal.append(G[index])
-	#publishTraversal(traversal)
+	publishTraversal(traversal)
 						
 
 def evalNeighbor(nNode, current): 
 	if(nNode not in closedSet):  # check if neighbor node is in closedSet - it has already been traveled to
-		tentative = current.g + 1.4*resolution  #checks what the potential cost to reach the node is 
+		tentative = current.g + 1.4*resolution #+ current.weight/10 #checks what the potential cost to reach the node is 
 		frontier.append(nNode)   
 		#publishFrontier(frontier)  # for rviz - publish node to frontier 
 		if (nNode not in openSet) or (tentative < nNode.g):  # true if node has not already been added to frontier. or true if a previously established cost to reach the node is larger than the tentative cost to reach the node. 
@@ -784,7 +787,7 @@ def tCallback(event):
     global pose
     global theta
 
-    odom_list.waitForTransform('map', 'base_footprint', rospy.Time(0), rospy.Duration(1.0))
+    odom_list.waitForTransform('map', 'base_footprint', rospy.Time(0), rospy.Duration(2.0))
     (position, orientation) = odom_list.lookupTransform('map','base_footprint', rospy.Time(0))
     pose.position.x=position[0]
     pose.position.y=position[1]
@@ -804,99 +807,99 @@ def statusCallback(status):
 
 #initializer for when running lab4 stuff in another file 
 
-def lab4Init(): 
-	global pub
-	global startRead
-	global goalRead
-	startRead = False
-	goalRead = False
-	global pub_frontier
-	global pub_traverse
-	global pub_path
-	global pubway
-	global frontier
-	frontier = list()
-	global goal_pub
+# def lab4Init(): 
+# 	global pub
+# 	global startRead
+# 	global goalRead
+# 	startRead = False
+# 	goalRead = False
+# 	global pub_frontier
+# 	global pub_traverse
+# 	global pub_path
+# 	global pubway
+# 	global frontier
+# 	frontier = list()
+# 	global goal_pub
 
-	global pose
-	global odom_list
-	#global odom_tf
-	pose = Pose()
-	global goalTheta
-	global theta
-	global pub_obs
-	global moveDone
-	moveDone = Bool()
+# 	global pose
+# 	global odom_list
+# 	#global odom_tf
+# 	pose = Pose()
+# 	global goalTheta
+# 	global theta
+# 	global pub_obs
+# 	global moveDone
+# 	moveDone = Bool()
 
 
-	rospy.init_node('RosBert NavStack')
-	sub = rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, mapCallBack)#changed from /map
-	pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
-	pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
-	pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
-	goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
-	pub_traverse = rospy.Publisher('map_cells/traversal', GridCells, queue_size=1)
-	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
-	start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
-	goal_pub = rospy.Publisher('goal_point', PoseStamped, queue_size=1)
-	pub_obs = rospy.Publisher('/map_cells/obstacles', GridCells, queue_size=1)
+# 	rospy.init_node('RosBert_NavStack')
+# 	sub = rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, mapCallBack)#changed from /map
+# 	pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
+# 	pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
+# 	pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
+# 	goal_sub = rospy.Subscriber('goal_pose', PoseStamped, readGoal, queue_size=1) #change topic for best results
+# 	pub_traverse = rospy.Publisher('map_cells/traversal', GridCells, queue_size=1)
+# 	pub_frontier = rospy.Publisher('map_cells/frontier', GridCells, queue_size=1)
+# 	start_sub = rospy.Subscriber('start_pose', PoseWithCovarianceStamped, readStart, queue_size=1) #change topic for best results
+# 	goal_pub = rospy.Publisher('goal_point', PoseStamped, queue_size=1)
+# 	pub_obs = rospy.Publisher('/map_cells/obstacles', GridCells, queue_size=1)
 
-	move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
-	move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
+# 	move_pub = rospy.Publisher('clicked_pose', PoseStamped, None, queue_size=1)
+# 	move_status_sub = rospy.Subscriber('/moves_done', Bool, statusCallback, queue_size=1)
 
-	rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
+# 	rospy.Timer(rospy.Duration(.01), tCallback) # timer callback for robot location
 
-	odom_list = tf.TransformListener() #listner for robot location
+# 	odom_list = tf.TransformListener() #listner for robot location
 
 
 #functions for finding path when running in another file
 
-def findPath(newMap, endGoalIndex): 
-    moveDone = False
-    path = aStar(newMap, goalIndex)
-    print "Going to publish path"
-    publishPath(noFilter(path))
-    print "Publishing waypoints"
-    waypoints = getDouglasWaypoints(path)
-    publishWaypoints(waypoints)#publish waypoints
-    print "Finished... beginning robot movements"
-    #for each waypoint
-    for i,waypt in enumerate(waypoints):
-        #hack - skip the last waypoint. see issue tracker in github
-        if i >= len(waypoints)-2:
-            moveDone = False
-            break
-        print "doing a new waypoint:"
-        print waypt
-        # if this is the last waypoint, instead take the goal orientation
-        if (abs(goalX - waypt.x) <= resolution) and (abs(goalY - waypt.y) <= resolution):
-            print "This waypoint is the goal"
-            orientation = goalOrientation
-        #calculate end orientation for waypoint - perhaps the angle to the next one? or just our current heading?
-        else:
-            orientation = pose.orientation
-        #publish goal to topic to move the robot
-        wayPose = PoseStamped()
-        wayPose.pose.position.x = waypt.x
-        wayPose.pose.position.y = waypt.y
-        wayPose.pose.position.z = 0
-        wayPose.pose.orientation = orientation
-        move_pub.publish(wayPose)
-        #wait for robot to arrive at waypoint (should be a service?)
-        errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
-        errorTheta = goalTheta - theta 
-        print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
+# def findPath(newMap, endGoalIndex): 
+#     moveDone = False
+#     path = aStar(newMap, goalIndex)
+#     print "Going to publish path"
+#     publishPath(noFilter(path))
+#     print "Publishing waypoints"
+#     waypoints = getDouglasWaypoints(path)
+#     publishWaypoints(waypoints)#publish waypoints
+#     print "Finished... beginning robot movements"
+#     #for each waypoint
+#     for i,waypt in enumerate(waypoints):
+#         #hack - skip the last waypoint. see issue tracker in github
+#         if i >= len(waypoints)-2:
+#             moveDone = False
+#             break
+#         print "doing a new waypoint:"
+#         print waypt
+#         # if this is the last waypoint, instead take the goal orientation
+#         if (abs(goalX - waypt.x) <= resolution) and (abs(goalY - waypt.y) <= resolution):
+#             print "This waypoint is the goal"
+#             orientation = goalOrientation
+#         #calculate end orientation for waypoint - perhaps the angle to the next one? or just our current heading?
+#         else:
+#             orientation = pose.orientation
+#         #publish goal to topic to move the robot
+#         wayPose = PoseStamped()
+#         wayPose.pose.position.x = waypt.x
+#         wayPose.pose.position.y = waypt.y
+#         wayPose.pose.position.z = 0
+#         wayPose.pose.orientation = orientation
+#         move_pub.publish(wayPose)
+#         #wait for robot to arrive at waypoint (should be a service?)
+#         errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
+#         errorTheta = goalTheta - theta 
+#         print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
 
-        while (not rospy.is_shutdown()) and not moveDone :
-            #chill out. Drink some coffee
-            errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
-            errorTheta = goalTheta - theta 
-            rospy.sleep(0.5)
-            #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
-        moveDone = False
+#         while (not rospy.is_shutdown()) and not moveDone :
+#             #chill out. Drink some coffee
+#             errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
+#             errorTheta = goalTheta - theta 
+#             rospy.sleep(0.5)
+#             #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
+#         moveDone = False
         
-    print "done robot movements"
-    goalRead = False
+#     print "done robot movements"
+#     goalRead = False
 
 
 
@@ -929,7 +932,7 @@ def run():
 
 
     rospy.init_node('lab3')
-    sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)
+    sub = rospy.Subscriber("/map", OccupancyGrid, mapCallBack)#rospy.Subscriber("/move_base/global_costmap/costmap", OccupancyGrid, mapCallBack)
     pub = rospy.Publisher("/map_check", GridCells, queue_size=1)  
     pub_path = rospy.Publisher("/path", GridCells, queue_size=1) # you can use other types if desired
     pubway = rospy.Publisher("/waypoints", GridCells, queue_size=1)
@@ -954,22 +957,31 @@ def run():
 
     while (1 and not rospy.is_shutdown()):
         publishCells(mapData) #publishing map data every 2 seconds
-        if goalRead:
+        while goalRead and not rospy.is_shutdown():
+            print "goal read"
             moveDone = False
             newMap = initMap(mapgrid)
             path = aStar(newMap, goalIndex)
             if noroutefound:
-            	nav_failed_pub.publish(True)
-            	continue
+                print "no route found"
+                nav_failed_pub.publish(True)
+                goalRead = False
+                break
+            else:
+                print "route found"
+                nav_failed_pub.publish(False)
             print "Going to publish path"
             publishPath(noFilter(path))
             print "Publishing waypoints"
             waypoints = getDouglasWaypoints(path)
             waypoints.pop() # pop off these incorrect waypoints		
             waypoints.pop()
+            waypoints.reverse()
             publishWaypoints(waypoints)#publish waypoints
             print "Finished... beginning robot movements"
             #for each waypoint
+            if len(waypoints) == 0:
+                goalRead = False
             for i,waypt in enumerate(waypoints):
                 #hack - skip the last waypoint. see issue tracker in github
                 if i >= len(waypoints):
@@ -981,6 +993,7 @@ def run():
                 if (abs(goalX - waypt.x) <= resolution) and (abs(goalY - waypt.y) <= resolution):
                     print "This waypoint is the goal"
                     orientation = goalOrientation
+                    goalRead = False # after this one, stop doing this loop
                 #calculate end orientation for waypoint - perhaps the angle to the next one? or just our current heading?
                 else:
                     orientation = pose.orientation
@@ -1000,12 +1013,14 @@ def run():
                     #chill out. Drink some coffee
                     errorDist = math.sqrt(pow(wayPose.pose.position.x - pose.position.x,2)+pow(wayPose.pose.position.y - pose.position.y,2))
                     errorTheta = goalTheta - theta 
-                    rospy.sleep(0.5)
+                    rospy.sleep(0.1)
                     #print "errorDist: %f errorTheta: %f" % (errorDist, errorTheta)
                 moveDone = False
-            nav_complete_pub.publish(True)    
-            print "done robot movements"
-            goalRead = False
+                break # just do this one waypoint
+        print "publishing nav complete"
+        nav_complete_pub.publish(True)    
+        print "done robot movements"
+        goalRead = False
         rospy.sleep(2)  
         #print("Complete")
     
