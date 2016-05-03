@@ -46,6 +46,7 @@ def mapCallBack(data):
     height = data.info.height
     offsetX = data.info.origin.position.x
     offsetY = data.info.origin.position.y
+
     #print data.info
     print "map callback"
 
@@ -149,6 +150,7 @@ def isInMap(point):
 
 		#checks if the passed point is in the map
 def isInMapXY(x, y):
+	return True
 	#catch if point is negative
 	if(x < 0 or y < 0):
 		return False
@@ -262,44 +264,44 @@ def findNeighbor(index, eightconnected):
 
 
 
-def expandObs(newMap):
+def expandObs(_inputmap):
 	global pub_obs
 	print "expanding nodes"
 	numberOfNodesExpanded = 0
 	robotSize = .25
 	obstacles = list()
 	map_obs = list()
-	#map_obs = (node for node in newMap if node.val > 30)
-	for node in newMap:
+	#map_obs = (node for node in _inputmap if node.val > 30)
+	for node in _inputmap:
 		if node.val > 40:
 			map_obs.append(node)
 	for obsNode in map_obs:
 		obsx = obsNode.point.x
 		obsy = obsNode.point.y
 
-		for distance in range(0, 5):# math.trunc(robotSize/resolution)):
+		for distance in range(0, 4):# math.trunc(robotSize/resolution)):
 			try:
 				if(isInMapXY(obsx + distance*resolution, obsy)):
 					eastindex = getIndexFromWorldPoint(obsx + distance*resolution, obsy)
-					east = newMap[eastindex]
+					east = _inputmap[eastindex]
 					if(east.weight < obsNode.val):
 						east.weight = obsNode.val
 					obstacles.append(east)
 				if(isInMapXY(obsx - distance*resolution, obsy)):
 					westindex = getIndexFromWorldPoint(obsx - distance*resolution, obsy)
-					west = newMap[westindex]
+					west = _inputmap[westindex]
 					if(west.weight < obsNode.val):
 						west.weight = obsNode.val
 					obstacles.append(west)
 				if(isInMapXY(obsx,obsy + distance*resolution)):
 					northindex =  getIndexFromWorldPoint(obsx,obsy + distance*resolution)
-					north = newMap[northindex]
+					north = _inputmap[northindex]
 					if(north.weight < obsNode.val):
 						north.weight = obsNode.val
 					obstacles.append(north)
 				if(isInMapXY(obsx,obsy - distance*resolution)):
 					southindex =  getIndexFromWorldPoint(obsx,obsy - distance*resolution)
-					south = newMap[southindex]
+					south = _inputmap[southindex]
 					if(south.weight < obsNode.val):
 						south.weight = obsNode.val
 					obstacles.append(south)
@@ -307,28 +309,28 @@ def expandObs(newMap):
 
 				if(isInMapXY(obsx+distance*resolution,obsy + distance*resolution)):
 					northeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy + distance*resolution)
-					northeast = newMap[northeastindex]
+					northeast = _inputmap[northeastindex]
 					if(northeast.weight < obsNode.val):
 						northeast.weight = obsNode.val
 					obstacles.append(northeast)
 					numberOfNodesExpanded = numberOfNodesExpanded + 1
 				if(isInMapXY(obsx-distance*resolution,obsy + distance*resolution)):
 					northwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy + distance*resolution)
-					northwest = newMap[northwestindex]
+					northwest = _inputmap[northwestindex]
 					if(northwest.weight < obsNode.val):
 						northwest.weight = obsNode.val
 					obstacles.append(northwest)
 					numberOfNodesExpanded = numberOfNodesExpanded + 1
 				if(isInMapXY(obsx+distance*resolution,obsy - distance*resolution)):
 					southeastindex = getIndexFromWorldPoint(obsx+distance*resolution,obsy - distance*resolution)
-					southeast = newMap[southeastindex]
+					southeast = _inputmap[southeastindex]
 					if(southeast.weight < obsNode.val):
 						southeast.weight = obsNode.val
 					obstacles.append(southeast)
 					numberOfNodesExpanded = numberOfNodesExpanded + 1
 				if(isInMapXY(obsx-distance*resolution,obsy - distance*resolution)):
 					southwestindex = getIndexFromWorldPoint(obsx-distance*resolution,obsy - distance*resolution)
-					southwest = newMap[southwestindex]
+					southwest = _inputmap[southwestindex]
 					if(southwest.weight < obsNode.val):
 						southwest.weight = obsNode.val
 					obstacles.append(southwest)
@@ -339,12 +341,12 @@ def expandObs(newMap):
 
 	publishObstacles(obstacles, resolution)
 	print "=================Num obs: %d Num found: %d" %(len(map_obs),numberOfNodesExpanded)
-	return newMap
+	return _inputmap
 
 #takes map data and converts it into nodes
 def initMap( _mapGrid):
 
-	mapCallBack(_mapGrid) 
+	#mapCallBack(_mapGrid) 
 	pubObInit()
 	newMap = list() 
 
@@ -358,11 +360,11 @@ def initMap( _mapGrid):
 		frontier.append(0)
 	
 	#TODO Fix expand obs 
-	#expandedMap = list()
-	#expandedMap = expandObs(newMap)
+	expandedMap = list()
+	expandedMap = expandObs(newMap)
 	
 	print "map created" 
-	return newMap
+	return expandedMap
  
 def pubObInit(): 
 	global pub_obs
@@ -978,6 +980,8 @@ def run():
             publishWaypoints(waypoints)#publish waypoints
             print "Finished... beginning robot movements"
             #for each waypoint
+            if len(waypoints) == 0:
+                goalRead = False
             for i,waypt in enumerate(waypoints):
                 #hack - skip the last waypoint. see issue tracker in github
                 if i >= len(waypoints):
