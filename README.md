@@ -1,5 +1,5 @@
 # RBE-3002-ROSbert
-Team ROSbert repo for lab code
+Team ROSbert repo for RBE 3002 labs at Worcester Polytechnic Institute. The final project involved having a Turtlebot fully explore and map a maze.
 
 ## Setup
 
