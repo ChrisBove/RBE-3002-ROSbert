@@ -221,7 +221,7 @@ def captainKirk():
 		goalPub.publish(wayPose)
 		# sends that as a goal to astar, lets robot move there and report it is done the move
 		print "waiting for astar path"
-		waitForValidPath()
+		waitForValidPath() # waits until navFailed is set by callback
 		if navFailed:
 			print "Our nav failed..."
 			edgelist.remove(edgelist[closestEdge])
@@ -298,19 +298,19 @@ def captainKirk():
 def waitForRobotToMove():
 	global navDone
 	while (not rospy.is_shutdown() and not navDone):
-		rospy.sleep(0.1)
+		pass
 	navDone = False
 
 def waitForValidPath():
 	global navCallbackServiced
 	while (not rospy.is_shutdown() and not navCallbackServiced):
-		rospy.sleep(0.1)
+		pass
 	navCallbackServiced = False
 
 def waitForRobotToSpin():
 	global spinDone
 	while (not rospy.is_shutdown() and not spinDone):
-		rospy.sleep(0.1)
+		pass
 	spinDone = False
 
 #I think this guy will just spin.
@@ -370,7 +370,7 @@ def tCallback(event):
     global pose
     global theta
 
-    odom_list.waitForTransform('map', 'base_footprint', rospy.Time(0), rospy.Duration(1.0))
+    odom_list.waitForTransform('map', 'base_footprint', rospy.Time(0), rospy.Duration(2.0))
     (position, orientation) = odom_list.lookupTransform('map','base_footprint', rospy.Time(0))
     pose.position.x=position[0]
     pose.position.y=position[1]
@@ -383,19 +383,21 @@ def tCallback(event):
     theta = math.degrees(yaw)
 
 def spinStatusCallback(status):
-    print "spinStatusCallback"
+    print "spinStatusCallback: %r" % status
     global spinDone
     spinDone = True
 
 def navStatusCallback(status):
-    print "navStatusCallback"
+    """THis fires when the navigation is done."""
+    print "navStatusCallback: %r" % status
     global navDone
     navDone = True
 
 def navFailedCallback(status):
-    print "navFailed, better choose a better point"
+    """ This fires whenever we finish trying a a star path """
+    print "navFailedCallback: %r" % status
     global navFailed, navCallbackServiced
-    navFailed = status
+    navFailed = status.data
     navCallbackServiced = True
 
 
