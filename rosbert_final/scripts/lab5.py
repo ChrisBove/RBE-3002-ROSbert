@@ -559,6 +559,20 @@ def navFailedCallback(status):
 #calls boldly go, 
 #looks around again to see if we can call boldly go again
 def run():
+	longstring = '''\
+	                             _  ___________________________=====____
+              __--__                / ||     =<==== NCC-1701 =======       /
+___________---______---___________  \_||__________________________________/
+\________________________________/           | |
+             \______/  \__ .. :  \           | |
+               `--'       \_   :  \          | |
+                         __-`------`-----____| |
+                      \ |||_     .::. :      |_|--_
+                      -)=|__ =<=======--      :. |_|
+                      / |||           __________---'
+                          ------------
+	'''
+	print longstring
 	rospy.init_node('lab5')
 	global nodeList
 	global mapData
@@ -621,7 +635,7 @@ def run():
 	rospy.sleep(2)  
 	print("Complete")
 
-
+	print longstring
 
 
 
